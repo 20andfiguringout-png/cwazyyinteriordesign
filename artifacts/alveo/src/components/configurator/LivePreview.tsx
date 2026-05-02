@@ -282,6 +282,7 @@ export function LivePreview({
       try {
         const renderer = new ClosetSVGRenderer(wallLayout, {
           showDimensions: true,
+          hardwareFinish: config.userInfo?.hardwareFinish ?? 'chrome',
           showLabels: true,
           style: config.userInfo!.stylePreference ?? "modern",
           woodFinish: config.userInfo!.woodFinish ?? "medium",

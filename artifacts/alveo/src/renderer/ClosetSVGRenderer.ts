@@ -5,6 +5,7 @@ interface RenderOptions {
   showLabels: boolean;
   style: UserPreferences['stylePreference'];
   woodFinish: UserPreferences['woodFinish'];
+  hardwareFinish?: string;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -129,6 +130,16 @@ export class ClosetSVGRenderer {
       white:  { bg: '#f8f8f8', panel: '#eeeeee', edge: '#c8c8c8', dark: '#aaaaaa' },
     };
     return p[this.options.woodFinish] ?? p.medium;
+  }
+
+  private get hardwareColor(): string {
+    const h: Record<string, string> = {
+      chrome:        '#b8b8b8',
+      brass:         '#c5a55a',
+      'matte-black': '#2c2c2c',
+      nickel:        '#a8a8a4',
+    };
+    return h[this.options.hardwareFinish ?? 'chrome'] ?? '#4A4540';
   }
 
   // ── Public entry ──────────────────────────────────────────────────────────
@@ -326,6 +337,9 @@ export class ClosetSVGRenderer {
         case 'top-shelves':
           out += this.renderShelfZone(zone, zx, zw);
           break;
+        case 'open-shelves':
+          out += this.renderOpenShelvesZone(zone, zx, zw);
+          break;
       }
     }
 
@@ -408,7 +422,7 @@ export class ClosetSVGRenderer {
       if (gPx < 4) continue; // skip silhouettes if too small
 
       const hookH   = clamp(this.scale * 1.2, 4, 9);
-      const count   = clamp(Math.floor((zw - pad * 2) / Math.max(this.scale * 2.8, 8)), 2, 8);
+      const count   = clamp(Math.floor((zw - pad * 2) / Math.max(this.scale * 2.2, 7)), 3, 14);
       const spacing = (zw - pad * 2) / (count + 1);
       const gw      = isLong ? clamp(this.scale * 2.2, 6, 15) : clamp(this.scale * 2.8, 7, 18);
       const gwBot   = isLong ? gw * 1.18 : gw * 0.88;
@@ -478,7 +492,7 @@ export class ClosetSVGRenderer {
         const barH = clamp(drawerH * 0.11, 2.5, 5);
         out += `
   <rect x="${midX - barW / 2}" y="${midY - barH / 2}" width="${barW}" height="${barH}"
-        fill="${this.wood.dark}" stroke="${this.wood.dark}" stroke-width="0.5" rx="${barH / 2}"/>
+        fill="${this.hardwareColor}" stroke="${this.hardwareColor}" stroke-width="0.5" rx="${barH / 2}"/>
   <rect x="${midX - barW / 2 + 3}" y="${midY - barH / 2 - 1.5}" width="${barW - 6}" height="${barH * 0.4}"
         fill="none" stroke="#fff" stroke-width="0.6" rx="1" opacity="0.4"/>`;
       }
@@ -663,6 +677,64 @@ export class ClosetSVGRenderer {
   <rect x="${zx}" y="${sy}" width="${zw}" height="${sh}"
         fill="${this.wood.panel}" stroke="${this.wood.edge}" stroke-width="1.5"/>
   <rect x="${zx}" y="${sy + sh}" width="${zw}" height="2" fill="rgba(0,0,0,0.05)"/>`;
+    }
+
+    return out;
+  }
+
+  // ── Open-shelves zone ─────────────────────────────────────────────────────
+
+  private renderOpenShelvesZone(zone: ClosetZone, zx: number, zw: number): string {
+    if (!zone.shelves?.length) return '';
+
+    const zoneTopY = this.cy(zone.y + zone.height);
+    const zoneBotY = this.cy(zone.y);
+    const sh       = Math.max(this.scale * 0.75, 3);
+    const zoneH    = safeH(zoneBotY, zoneTopY);
+
+    let out = `\n  <!-- open-shelves x=${zone.x} -->`;
+
+    // Zone background
+    out += `
+  <rect x="${zx}" y="${zoneTopY}" width="${zw}" height="${zoneH}"
+        fill="url(#df)" stroke="none" opacity="0.4"/>`;
+
+    for (let i = 0; i < zone.shelves.length; i++) {
+      const shelf = zone.shelves[i];
+      const sy    = this.cy(zone.y + shelf.height);
+
+      // Shelf board
+      out += `
+  <rect x="${zx}" y="${sy}" width="${zw}" height="${sh}"
+        fill="${this.wood.panel}" stroke="${this.wood.edge}" stroke-width="1.5"/>
+  <rect x="${zx}" y="${sy + sh}" width="${zw}" height="2.5" fill="rgba(0,0,0,0.06)"/>`;
+
+      // Bay above this shelf (up to next shelf or zone top)
+      const nextRelH  = i + 1 < zone.shelves.length
+        ? zone.shelves[i + 1].height
+        : zone.height;
+      const bayTopY   = this.cy(zone.y + nextRelH);
+      const bayBotY   = sy;
+      const bayH      = safeH(bayBotY, bayTopY);
+
+      // Folded-item stack silhouettes in the bay
+      if (bayH > 8) {
+        const stackH  = clamp(bayH * 0.55, 4, 18);
+        const stackW  = clamp(zw * 0.18, 8, 24);
+        const stackY  = bayTopY + bayH * 0.22;
+        const slots   = clamp(Math.floor((zw - 12) / (stackW + 4)), 1, 5);
+        const spacing = (zw - 12) / Math.max(slots, 1);
+
+        for (let s = 0; s < slots; s++) {
+          const sx = zx + 6 + s * spacing + stackW * 0.5;
+          // Two stacked rectangles simulate folded clothing
+          out += `
+  <rect x="${sx - stackW / 2}" y="${stackY}" width="${stackW}" height="${stackH * 0.42}"
+        fill="${this.wood.bg}" stroke="${this.wood.edge}" stroke-width="0.8" rx="1" opacity="0.75"/>
+  <rect x="${sx - stackW / 2 + 1}" y="${stackY + stackH * 0.42 + 1.5}" width="${stackW - 2}" height="${stackH * 0.38}"
+        fill="${this.wood.panel}" stroke="${this.wood.edge}" stroke-width="0.8" rx="1" opacity="0.65"/>`;
+        }
+      }
     }
 
     return out;
@@ -867,6 +939,7 @@ export class ClosetSVGRenderer {
       'long-hang':    'LONG HANG',
       'shoe-shelves': 'SHOE SHELVES',
       'drawers':      'DRAWERS',
+      'open-shelves': 'OPEN SHELVES',
       'top-shelves':  'SHELF',
       'accessories':  'ACCESSORIES',
     };

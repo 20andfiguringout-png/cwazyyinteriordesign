@@ -56,8 +56,9 @@ export interface UserPreferences {
   woodFinish: 'light' | 'medium' | 'dark' | 'white';
   drawerPreference: 'many-small' | 'few-large' | 'mixed';
   priorityItems: ('shoes' | 'hanging' | 'folded' | 'accessories')[];
-  hardwareFinish?: string;
+  hardwareFinish?: HardwareFinish;
   accentColor?: string;
+  foldedStorage?: FoldedStorageStyle;  // drawers (default) or open shelves
 }
 
 // ── Zone customisation ───────────────────────────────────────────────────────
@@ -65,7 +66,14 @@ export type DrawerPosition = 'bottom' | 'middle' | 'top';
 
 export interface ZoneOverrides {
   drawerPosition?: DrawerPosition;   // reposition drawer stack within its column
+  valetRod?: boolean;               // add a small pull-out valet rod
 }
+
+/** Shelf display style for folded items */
+export type FoldedStorageStyle = 'drawers' | 'open-shelves';
+
+/** Hardware finish for pulls, handles, and rods */
+export type HardwareFinish = 'chrome' | 'brass' | 'matte-black' | 'nickel';
 
 export interface LayoutWarning {
   id:           string;
@@ -75,7 +83,7 @@ export interface LayoutWarning {
 }
 
 export interface ClosetZone {
-  type: 'double-hang' | 'long-hang' | 'shoe-shelves' | 'drawers' | 'top-shelves' | 'accessories';
+  type: 'double-hang' | 'long-hang' | 'shoe-shelves' | 'drawers' | 'open-shelves' | 'top-shelves' | 'accessories';
   x: number; // position from left
   y: number; // position from bottom  
   width: number;

@@ -10,6 +10,9 @@ import {
   RoomDimensions,
   UserPreferences,
   ClosetType,
+  DrawerPosition,
+  FoldedStorageStyle,
+  HardwareFinish,
 } from "@/types/closet";
 import {
   Calculator,
@@ -1618,6 +1621,119 @@ function PreferencesStep({
               </button>
             );
           })}
+        </div>
+      </div>
+
+      {/* Folded Storage Style */}
+      <div>
+        <h3 className="font-medium text-charcoal-600 mb-1 uppercase text-xs tracking-widest">
+          Folded Storage Style
+        </h3>
+        <p className="text-xs text-charcoal-400 mb-3">
+          How you'd like T-shirts, sweaters and jeans organised
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          {(
+            [
+              { id: "drawers",      label: "Drawers",      desc: "Concealed behind faces", icon: "📦" },
+              { id: "open-shelves", label: "Open Shelves", desc: "Visible folded stacks",   icon: "🗂️" },
+            ] as { id: FoldedStorageStyle; label: string; desc: string; icon: string }[]
+          ).map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => update("foldedStorage", opt.id)}
+              className={`flex items-center space-x-3 p-4 rounded-xl border-2 transition-all ${
+                (prefs.foldedStorage ?? "drawers") === opt.id
+                  ? "border-charcoal-500 bg-charcoal-50"
+                  : "border-cream-200 bg-cream-50 hover:border-taupe-300"
+              }`}
+            >
+              <span className="text-xl">{opt.icon}</span>
+              <div className="text-left">
+                <p className="font-medium text-sm text-charcoal-600">{opt.label}</p>
+                <p className="text-xs text-charcoal-400">{opt.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Storage Zone Position */}
+      <div>
+        <h3 className="font-medium text-charcoal-600 mb-1 uppercase text-xs tracking-widest">
+          {(prefs.foldedStorage ?? "drawers") === "open-shelves"
+            ? "Shelf Zone Position"
+            : "Drawer Position"}
+        </h3>
+        <p className="text-xs text-charcoal-400 mb-3">
+          Where the storage zone sits within the hanging column
+        </p>
+        <div className="grid grid-cols-3 gap-3">
+          {(
+            [
+              { id: "bottom", label: "Bottom", desc: "Most accessible" },
+              { id: "middle", label: "Middle", desc: "Arm-reach height" },
+              { id: "top",    label: "Top",    desc: "Seasonal items"  },
+            ] as { id: DrawerPosition; label: string; desc: string }[]
+          ).map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() =>
+                onUpdate({
+                  zoneOverrides: {
+                    ...config.zoneOverrides,
+                    drawerPosition: opt.id,
+                  },
+                })
+              }
+              className={`p-3 rounded-xl border-2 text-center transition-all ${
+                (config.zoneOverrides?.drawerPosition ?? "bottom") === opt.id
+                  ? "border-charcoal-500 bg-charcoal-50"
+                  : "border-cream-200 bg-cream-50 hover:border-taupe-300"
+              }`}
+            >
+              <p className="font-medium text-sm text-charcoal-600">{opt.label}</p>
+              <p className="text-xs text-charcoal-400 mt-0.5">{opt.desc}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Hardware Finish */}
+      <div>
+        <h3 className="font-medium text-charcoal-600 mb-1 uppercase text-xs tracking-widest">
+          Hardware Finish
+        </h3>
+        <p className="text-xs text-charcoal-400 mb-3">
+          Pulls, handles and rod brackets
+        </p>
+        <div className="grid grid-cols-4 gap-3">
+          {(
+            [
+              { id: "chrome",      name: "Chrome",        color: "#b8b8b8" },
+              { id: "brass",       name: "Brushed Brass", color: "#c5a55a" },
+              { id: "matte-black", name: "Matte Black",   color: "#2c2c2c" },
+              { id: "nickel",      name: "Nickel",        color: "#a8a8a4" },
+            ] as { id: HardwareFinish; name: string; color: string }[]
+          ).map((hw) => (
+            <button
+              key={hw.id}
+              onClick={() => update("hardwareFinish", hw.id)}
+              className={`p-3 rounded-xl border-2 transition-all ${
+                (prefs.hardwareFinish ?? "chrome") === hw.id
+                  ? "border-charcoal-500 ring-2 ring-charcoal-200"
+                  : "border-cream-300 hover:border-taupe-400"
+              }`}
+            >
+              <div
+                className="w-full h-7 rounded-lg mb-2 border border-cream-300"
+                style={{ backgroundColor: hw.color }}
+              />
+              <p className="text-xs font-medium text-charcoal-600 text-center">
+                {hw.name}
+              </p>
+            </button>
+          ))}
         </div>
       </div>
     </div>

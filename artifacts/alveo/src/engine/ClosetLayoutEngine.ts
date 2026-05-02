@@ -329,19 +329,19 @@ export class ClosetLayoutEngine {
     const longItems  = this.wardrobe.longDresses;
     const shortItems = this.wardrobe.shirts + this.wardrobe.shortJackets +
                        this.wardrobe.pants  + this.wardrobe.suits;
-    const hasDrawers = this.hasAnyDrawers();
+    const hasFolded  = this.hasFoldedItems();
     const totalShoes = this.countShoes();
 
     // Determine which columns we need
     const wantsLong  = longItems  > 0;
-    const wantsShort = shortItems > 0 || hasDrawers;
+    const wantsShort = shortItems > 0 || hasFolded;
     const wantsShoe  = totalShoes > 0;
 
     // Calculate widths first, then decide which columns actually fit
     const widths = this.distributeWidthsSafe(wantsLong, wantsShort, wantsShoe, W);
 
     const zones: ClosetZone[] = [];
-    const drawerH = hasDrawers ? this.calcDrawerStackHeight() : 0;
+    const drawerH = hasFolded ? this.calcFoldedStorageHeight() : 0;
     let curX = 0;
 
     if (wantsLong && widths.longW > 0) {
@@ -349,7 +349,7 @@ export class ClosetLayoutEngine {
       curX += widths.longW;
     }
     if (wantsShort && widths.shortW > 0) {
-      if (hasDrawers && drawerH > 0) {
+      if (hasFolded && drawerH > 0) {
         this.buildDrawerAndHang(zones, curX, widths.shortW, drawerH);
       } else {
         this.addShortHangZone(zones, curX, widths.shortW, TOE_KICK, this.H - TOE_KICK);
@@ -401,10 +401,10 @@ export class ClosetLayoutEngine {
    */
   private buildDrawersOnly(W: number): ClosetZone[] {
     const zones: ClosetZone[] = [];
-    if (this.hasAnyDrawers()) {
-      const dH      = this.calcDrawerStackHeight();
-      const hangH   = this.H - TOE_KICK - dH;
-      this.addDrawerZone(zones, 0, W, TOE_KICK, dH);
+    if (this.hasFoldedItems()) {
+      const dH    = this.calcFoldedStorageHeight();
+      const hangH = this.H - TOE_KICK - dH;
+      this.addFoldedStorageZone(zones, 0, W, TOE_KICK, dH);
       if (hangH >= 30) {
         this.addShortHangZone(zones, 0, W, TOE_KICK + dH, hangH);
       }
@@ -439,10 +439,10 @@ export class ClosetLayoutEngine {
         return this.buildDrawersOnly(W);
       }
 
-      if (this.hasAnyDrawers()) {
-        const dH    = this.calcDrawerStackHeight();
+      if (this.hasFoldedItems()) {
+        const dH    = this.calcFoldedStorageHeight();
         const hangH = this.H - TOE_KICK - dH;
-        this.addDrawerZone(zones, 0, hangW, TOE_KICK, dH);
+        this.addFoldedStorageZone(zones, 0, hangW, TOE_KICK, dH);
         if (hangH >= 30) {
           this.addShortHangZone(zones, 0, hangW, TOE_KICK + dH, hangH);
         }
@@ -504,6 +504,34 @@ export class ClosetLayoutEngine {
     out.push({ type: 'shoe-shelves', x, y: yBottom, width: w, height: totalH, shelves });
   }
 
+  /** Dispatch to drawers or open-shelves zone depending on user preference. */
+  private addFoldedStorageZone(out: ClosetZone[], x: number, w: number, yBottom: number, totalH: number) {
+    if (this.prefs.foldedStorage === 'open-shelves') {
+      this.addOpenShelvesZone(out, x, w, yBottom, totalH);
+    } else {
+      this.addDrawerZone(out, x, w, yBottom, totalH);
+    }
+  }
+
+  private addOpenShelvesZone(out: ClosetZone[], x: number, w: number, yBottom: number, totalH: number) {
+    if (w < 8 || totalH < 10) return;
+    const shelves = this.buildOpenShelves(totalH);
+    if (!shelves.length) return;
+    out.push({ type: 'open-shelves', x, y: yBottom, width: w, height: totalH, shelves });
+  }
+
+  private buildOpenShelves(totalH: number): ShelfConfig[] {
+    const shelves: ShelfConfig[] = [];
+    const OPEN_SPACING = 12; // 12" clear space per shelf for folded items
+    let relH = DRAWER_MARG;
+    const maxRelH = totalH - SHELF_THICK - 2;
+    while (relH + SHELF_THICK <= maxRelH && shelves.length < 10) {
+      shelves.push({ height: relH, depth: this.D - 4, spacing: OPEN_SPACING, count: 1, purpose: 'folded' });
+      relH += SHELF_THICK + OPEN_SPACING;
+    }
+    return shelves;
+  }
+
   // ── Drawer position dispatcher ────────────────────────────────────────────
 
   /** Place drawers at bottom / middle / top of the short-hang column */
@@ -515,7 +543,7 @@ export class ClosetLayoutEngine {
         const hangH = Math.max(availH - drawerH, 30);
         const actualDrawH = availH - hangH;
         if (actualDrawH >= DRAWER_JEW + DRAWER_MARG * 2) {
-          this.addDrawerZone(out, x, w, TOE_KICK + hangH, actualDrawH);
+          this.addFoldedStorageZone(out, x, w, TOE_KICK + hangH, actualDrawH);
         }
         this.addShortHangZone(out, x, w, TOE_KICK, hangH);
         break;
@@ -528,7 +556,7 @@ export class ClosetLayoutEngine {
         const upperH     = this.H - upperY;
         this.addShortHangZone(out, x, w, TOE_KICK, lowerH);
         if (drawerH >= DRAWER_JEW + DRAWER_MARG * 2) {
-          this.addDrawerZone(out, x, w, drawerYBot, drawerH);
+          this.addFoldedStorageZone(out, x, w, drawerYBot, drawerH);
         }
         if (upperH >= 30) {
           this.addShortHangZone(out, x, w, upperY, upperH);
@@ -539,7 +567,7 @@ export class ClosetLayoutEngine {
         const hangH = Math.max(availH - drawerH, 30);
         const actualDrawH = availH - hangH;
         if (actualDrawH >= DRAWER_JEW + DRAWER_MARG * 2) {
-          this.addDrawerZone(out, x, w, TOE_KICK, actualDrawH);
+          this.addFoldedStorageZone(out, x, w, TOE_KICK, actualDrawH);
         }
         this.addShortHangZone(out, x, w, TOE_KICK + actualDrawH, hangH);
         break;
@@ -573,13 +601,15 @@ export class ClosetLayoutEngine {
           if (parts.length) zone.contentLabel = parts.join(' · ');
           break;
         }
-        case 'drawers': {
+        case 'drawers':
+        case 'open-shelves': {
           const parts = [
             this.wardrobe.jewelry ? 'Jewelry' : null,
             fmt(this.wardrobe.tShirts,  'T-shirt'),
             fmt(this.wardrobe.sweaters, 'sweater'),
             fmt(this.wardrobe.jeans,    'jean', 'jeans'),
             this.wardrobe.underwear > 0 ? 'Lingerie' : null,
+            fmt(this.wardrobe.bags,     'bag'),
           ].filter(Boolean) as string[];
           if (parts.length) zone.contentLabel = parts.join(' · ');
           break;
@@ -634,7 +664,7 @@ export class ClosetLayoutEngine {
 
     for (const wall of walls) {
       for (const zone of wall.zones) {
-        if (zone.width > 32 && (zone.type === 'shoe-shelves' || zone.type === 'top-shelves')) {
+        if (zone.width > 32 && (zone.type === 'shoe-shelves' || zone.type === 'top-shelves' || zone.type === 'open-shelves')) {
           warnings.push({
             id:          `shelf-span-${zone.x}`,
             message:     `Wide shelf span: ${Math.round(zone.width)}"`,
@@ -803,6 +833,27 @@ export class ClosetLayoutEngine {
   // Drawer height calculator
   // ─────────────────────────────────────────────────────────────────────────
 
+  /** Returns the height needed for folded-item storage, regardless of style (drawers or shelves). */
+  private calcFoldedStorageHeight(): number {
+    return this.prefs.foldedStorage === 'open-shelves'
+      ? this.calcOpenShelvesHeight()
+      : this.calcDrawerStackHeight();
+  }
+
+  private calcOpenShelvesHeight(): number {
+    const OPEN_SPACING = 12;
+    let count = 0;
+    count += Math.ceil(this.wardrobe.tShirts  / 8);
+    count += Math.ceil(this.wardrobe.sweaters / 4);
+    if (this.wardrobe.jeans     > 0) count += 1;
+    if (this.wardrobe.underwear > 0) count += 1;
+    if (this.wardrobe.jewelry)       count += 1;
+    count = clampN(count, 2, 6);
+    const rawH = count * (SHELF_THICK + OPEN_SPACING) + DRAWER_MARG * 2;
+    const maxH = Math.floor((this.H - TOE_KICK) * 0.60);
+    return Math.min(Math.round(rawH), maxH);
+  }
+
   private calcDrawerStackHeight(): number {
     let count = 0;
     if (this.wardrobe.jewelry)          count += 1;
@@ -826,11 +877,17 @@ export class ClosetLayoutEngine {
   // Inventory helpers
   // ─────────────────────────────────────────────────────────────────────────
 
-  private hasAnyDrawers(): boolean {
+  /** True when the wardrobe contains any items that need folded storage (drawers or open shelves). */
+  private hasFoldedItems(): boolean {
     return (
       this.wardrobe.tShirts + this.wardrobe.sweaters +
       this.wardrobe.jeans   + this.wardrobe.underwear
     ) > 0 || !!this.wardrobe.jewelry || this.wardrobe.ties > 0;
+  }
+
+  /** True only when folded storage is rendered as drawers (not open shelves). */
+  private hasAnyDrawers(): boolean {
+    return this.hasFoldedItems() && this.prefs.foldedStorage !== 'open-shelves';
   }
 
   private countShoes(): number {
