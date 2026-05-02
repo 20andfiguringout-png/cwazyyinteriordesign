@@ -1048,7 +1048,7 @@ export function LivePreview({
                   </div>
                 )}
 
-              {/* ── Zone Controls — drawer position selector ── */}
+              {/* ── Zone Controls — drawer position selector + valet rod ── */}
               {svgContent && hasDrawersInView && (
                 <div className="mt-4 pt-4 border-t border-cream-200 space-y-3">
                   <div className="flex items-center justify-between">
@@ -1069,6 +1069,39 @@ export function LivePreview({
                     position={zoneOverrides.drawerPosition ?? "bottom"}
                     onChange={handlePositionChange}
                   />
+
+                  {/* Valet rod toggle */}
+                  <div className="flex items-center justify-between pt-2 border-t border-cream-100">
+                    <div>
+                      <p className="text-xs font-medium text-charcoal-600">Valet rod</p>
+                      <p className="text-[11px] text-stone-400 mt-0.5 leading-snug">
+                        Pull-out rod above drawers for next-day outfits
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={!!zoneOverrides.valetRod}
+                      onClick={() => {
+                        setPrevZoneOverrides(zoneOverrides);
+                        setZoneOverrides({
+                          ...zoneOverrides,
+                          valetRod: !zoneOverrides.valetRod,
+                        });
+                      }}
+                      className={`relative flex-shrink-0 w-10 h-5 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-taupe-400 ${
+                        zoneOverrides.valetRod ? "bg-taupe-500" : "bg-stone-200"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                          zoneOverrides.valetRod
+                            ? "translate-x-5"
+                            : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
               )}
 

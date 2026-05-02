@@ -518,6 +518,8 @@ export class ClosetSVGRenderer {
       }
     }
 
+    if (zone.valetRod) out += this.renderValetRod(zone, zx, zw);
+
     return out;
   }
 
@@ -736,6 +738,76 @@ export class ClosetSVGRenderer {
         }
       }
     }
+
+    if (zone.valetRod) out += this.renderValetRod(zone, zx, zw);
+
+    return out;
+  }
+
+  // ── Valet rod ─────────────────────────────────────────────────────────────
+
+  /**
+   * Draws a pull-out valet rod symbol at the top of a drawer / open-shelves
+   * zone.  The rod projects from the right edge of the column with two small
+   * garment silhouettes hanging from it, plus a "VALET ROD" label.
+   */
+  private renderValetRod(zone: ClosetZone, zx: number, zw: number): string {
+    // Mount point: top of zone, right edge
+    const mountAFF = zone.y + zone.height;
+    const mountY   = this.cy(mountAFF);
+    const mountX   = zx + zw;
+
+    // Rod extends rightward; keep it proportional but visible
+    const rodLen = clamp(zw * 0.40, 22, 38);
+    const hw     = this.hardwareColor;
+    const txtCol = this.wood.dark;
+
+    let out = '\n  <!-- ── valet rod ── -->';
+
+    // Bracket plate flush with the right panel face
+    out += `
+  <rect x="${mountX - 2.5}" y="${mountY - 9}" width="4" height="18"
+        fill="${hw}" rx="1.5" opacity="0.92"/>`;
+
+    // Horizontal pull-out rod (solid near bracket, dashed extension hint)
+    const solidEnd = mountX + rodLen * 0.55;
+    out += `
+  <line x1="${mountX}" y1="${mountY}" x2="${solidEnd}" y2="${mountY}"
+        stroke="${hw}" stroke-width="3" stroke-linecap="round"/>
+  <line x1="${solidEnd}" y1="${mountY}" x2="${mountX + rodLen}" y2="${mountY}"
+        stroke="${hw}" stroke-width="1.8" stroke-dasharray="3,2.5" stroke-linecap="round" opacity="0.55"/>`;
+
+    // End-cap ball
+    out += `
+  <circle cx="${mountX + rodLen}" cy="${mountY}" r="2.6" fill="${hw}"/>`;
+
+    // Two mini garment silhouettes hanging from the rod
+    const hookH = 5;
+    const gH    = clamp(11 * this.scale, 11, 19);
+    const gW    = clamp(3.2 * this.scale, 5, 9);
+    const gCols = ['#f0ede8', '#e5e0da'] as const;
+
+    for (let gi = 0; gi < 2; gi++) {
+      const gx  = mountX + rodLen * (gi === 0 ? 0.28 : 0.62);
+      const col = gCols[gi];
+
+      // Hanger wire
+      out += `
+  <polyline points="${gx},${mountY} ${gx - gW * 0.55},${mountY + hookH} ${gx + gW * 0.55},${mountY + hookH}"
+            fill="none" stroke="#888" stroke-width="0.9" stroke-linejoin="round"/>
+  <circle cx="${gx}" cy="${mountY}" r="1.3" fill="none" stroke="#888" stroke-width="0.75"/>`;
+
+      // Garment body (simple trapezoid)
+      out += `
+  <path d="M${gx - gW * 0.55},${mountY + hookH} L${gx - gW},${mountY + hookH + gH} L${gx + gW},${mountY + hookH + gH} L${gx + gW * 0.55},${mountY + hookH} Z"
+        fill="${col}" fill-opacity="0.80" stroke="#9a9090" stroke-width="0.55"/>`;
+    }
+
+    // "VALET ROD" label above the rod
+    out += `
+  <text x="${mountX + rodLen * 0.5}" y="${mountY - 13}"
+        text-anchor="middle" font-size="5.5" fill="${txtCol}" opacity="0.60"
+        font-family="'Helvetica Neue',Arial,sans-serif" letter-spacing="0.8">VALET ROD</text>`;
 
     return out;
   }

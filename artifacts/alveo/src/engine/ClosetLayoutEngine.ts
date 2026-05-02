@@ -72,6 +72,7 @@ export class ClosetLayoutEngine {
   private roomD: number;   // room depth (door-to-back)
   private closetType: ClosetType;
   private drawerPosition: DrawerPosition;
+  private valetRod: boolean;
   private wardrobe: WardrobeItems;
   private shoes: ShoeCollection;
   private prefs: UserPreferences;
@@ -97,6 +98,7 @@ export class ClosetLayoutEngine {
     this.D = ClosetLayoutEngine.normDim(rawD, 18,  48,                      UNIT_DEPTH);
     this.closetType     = input.closetType ?? 'reach-in';
     this.drawerPosition = input.zoneOverrides?.drawerPosition ?? 'bottom';
+    this.valetRod       = input.zoneOverrides?.valetRod ?? false;
     this.roomW = ClosetLayoutEngine.normDim(rawRoomW, 36, Number.MAX_SAFE_INTEGER, this.W);
     this.roomD = ClosetLayoutEngine.normDim(rawRoomD, 48, Number.MAX_SAFE_INTEGER, Math.max(this.W * 0.75, 60));
     this.wardrobe  = this.normWardrobe(input.wardrobe);
@@ -494,7 +496,9 @@ export class ClosetLayoutEngine {
     if (w < 8 || totalH < DRAWER_JEW + DRAWER_MARG * 2) return;
     const drawers = this.buildDrawerList(w, yBottom, totalH);
     if (!drawers.length) return;
-    out.push({ type: 'drawers', x, y: yBottom, width: w, height: totalH, drawers });
+    const zone: ClosetZone = { type: 'drawers', x, y: yBottom, width: w, height: totalH, drawers };
+    if (this.valetRod) zone.valetRod = true;
+    out.push(zone);
   }
 
   private addShoeColumn(out: ClosetZone[], x: number, w: number, yBottom: number, totalH: number) {
@@ -517,7 +521,9 @@ export class ClosetLayoutEngine {
     if (w < 8 || totalH < 10) return;
     const shelves = this.buildOpenShelves(totalH);
     if (!shelves.length) return;
-    out.push({ type: 'open-shelves', x, y: yBottom, width: w, height: totalH, shelves });
+    const zone: ClosetZone = { type: 'open-shelves', x, y: yBottom, width: w, height: totalH, shelves };
+    if (this.valetRod) zone.valetRod = true;
+    out.push(zone);
   }
 
   private buildOpenShelves(totalH: number): ShelfConfig[] {

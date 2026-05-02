@@ -92,6 +92,7 @@ export interface ClosetZone {
   rods?: RodConfig[];
   drawers?: DrawerConfig[];
   contentLabel?: string;   // e.g. "15 shirts · 8 blazers" — populated by engine
+  valetRod?: boolean;      // pull-out valet rod at the top of this zone
 }
 
 // ── Fitted wall — one elevation in a multi-wall walk-in ──────────────────────
