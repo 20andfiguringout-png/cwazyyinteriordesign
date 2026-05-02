@@ -59,12 +59,11 @@ router.post("/events", (req: Request, res: Response) => {
 
 router.get("/events", (req: Request, res: Response) => {
   const configuredToken = process.env["EVENTS_ADMIN_TOKEN"];
-  if (configuredToken) {
-    const provided = req.headers["x-admin-token"];
-    if (provided !== configuredToken) {
-      res.status(401).json({ error: "Unauthorized" });
-      return;
-    }
+  // Fail-closed: if no token is configured, deny all access to the admin listing.
+  // This prevents accidental exposure of analytics data in unprotected deployments.
+  if (!configuredToken || req.headers["x-admin-token"] !== configuredToken) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
   }
   res.json({ events: store.slice(-200) });
 });

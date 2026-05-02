@@ -137,7 +137,8 @@ router.get("/design-comments", async (req: Request, res: Response) => {
   const isAll           = req.query["all"] === "1";
 
   if (isAll) {
-    if (configuredToken && req.headers["x-admin-token"] !== configuredToken) {
+    // Fail-closed: require a configured token; deny access if not set.
+    if (!configuredToken || req.headers["x-admin-token"] !== configuredToken) {
       res.status(401).json({ error: "Unauthorized" }); return;
     }
 
@@ -279,7 +280,8 @@ router.patch("/design-comments", (req: Request, res: Response) => {
   // mention-ack path
   const mentionAckParsed = mentionAckSchema.safeParse(req.body);
   if (mentionAckParsed.success) {
-    if (configuredToken && req.headers["x-admin-token"] !== configuredToken) {
+    // Fail-closed: mention-ack requires a configured admin token too.
+    if (!configuredToken || req.headers["x-admin-token"] !== configuredToken) {
       res.status(401).json({ error: "Unauthorized" }); return;
     }
     const { mentionUser, commentId, read } = mentionAckParsed.data;
