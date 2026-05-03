@@ -1,0 +1,31 @@
+kind = "slides"
+previewPath = "/alveo-pitch/"
+title = "Alvéo Pitch Deck"
+version = "1.0.0"
+id = "artifacts/alveo-pitch"
+router = "path"
+
+[[integratedSkills]]
+name = "slides"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/alveo-pitch/" ]
+localPort = 23722
+
+[services.development]
+run = "pnpm --filter @workspace/alveo-pitch run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/alveo-pitch", "run", "build" ]
+publicDir = "artifacts/alveo-pitch/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23722"
+BASE_PATH = "/alveo-pitch/"
