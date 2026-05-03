@@ -27,6 +27,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "person.2", selected: "person.2.fill" }} />
         <Label>Clients</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="ar">
+        <Icon sf={{ default: "camera.viewfinder", selected: "camera.viewfinder" }} />
+        <Label>AR Preview</Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
@@ -111,6 +115,18 @@ function ClassicTabLayout() {
               <SymbolView name="person.2" tintColor={color} size={22} />
             ) : (
               <Feather name="users" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="ar"
+        options={{
+          title: "AR Preview",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="camera.viewfinder" tintColor={color} size={22} />
+            ) : (
+              <Feather name="aperture" size={22} color={color} />
             ),
         }}
       />

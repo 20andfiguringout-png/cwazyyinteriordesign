@@ -18,6 +18,7 @@ interface Project {
 interface Approval {
   id: string; design_id: string; design_name: string | null; client_email: string | null;
   status: string; created_at: string; responded_at: string | null; client_note: string | null;
+  token?: string;
 }
 interface SavedDesign {
   id: string; name: string; savedAt: string; config?: Record<string, unknown>;

@@ -391,6 +391,10 @@ importers:
         version: 3.25.76
 
   artifacts/alveo-mobile:
+    dependencies:
+      expo-camera:
+        specifier: ~16.1.11
+        version: 16.1.11(expo@54.0.34)(react-native-web@0.21.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
     devDependencies:
       '@babel/core':
         specifier: ^7.25.2
@@ -3914,6 +3918,17 @@ packages:
       expo: '*'
       react: '*'
       react-native: '*'
+
+  expo-camera@16.1.11:
+    resolution: {integrity: sha512-etA5ZKoC6nPBnWWqiTmlX//zoFZ6cWQCCIdmpUHTGHAKd4qZNCkhPvBWbi8o32pDe57lix1V4+TPFgEcvPwsaA==}
+    peerDependencies:
+      expo: '*'
+      react: '*'
+      react-native: '*'
+      react-native-web: '*'
+    peerDependenciesMeta:
+      react-native-web:
+        optional: true
 
   expo-constants@18.0.13:
     resolution: {integrity: sha512-FnZn12E1dRYKDHlAdIyNFhBurKTS3F9CrfrBDJI5m3D7U17KBHMQ6JEfYlSj7LG7t+Ulr+IKaj58L1k5gBwTcQ==}
@@ -10321,6 +10336,15 @@ snapshots:
       expo: 54.0.34(@babel/core@7.29.0)(@expo/metro-runtime@6.1.2)(expo-router@6.0.23)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
       react: 19.1.0
       react-native: 0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)
+
+  expo-camera@16.1.11(expo@54.0.34)(react-native-web@0.21.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0):
+    dependencies:
+      expo: 54.0.34(@babel/core@7.29.0)(@expo/metro-runtime@6.1.2)(expo-router@6.0.23)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
+      invariant: 2.2.4
+      react: 19.1.0
+      react-native: 0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)
+    optionalDependencies:
+      react-native-web: 0.21.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
 
   expo-constants@18.0.13(expo@54.0.34)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)):
     dependencies:
