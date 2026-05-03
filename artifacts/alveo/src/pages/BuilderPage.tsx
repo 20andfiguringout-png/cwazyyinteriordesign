@@ -555,6 +555,12 @@ function StatsPanel({
     }
     .print-btn:hover { background: #1a1714; }
     .print-btn svg { flex-shrink: 0; }
+    .kbd {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px; border-radius: 4px;
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+      font-size: 11px; font-weight: 600; line-height: 1; margin-left: 2px;
+    }
     @media print {
       html, body { background: #fff; height: auto; }
       .print-btn { display: none; }
@@ -574,9 +580,20 @@ function StatsPanel({
       <rect x="6" y="14" width="12" height="8"/>
     </svg>
     Print / Save as PDF
+    <span class="kbd">P</span>
   </button>
   <span class="badge">Alvéo · ${label} Preview</span>
   <div class="svg-wrap">${svgContent}</div>
+  <script>
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'p' || e.key === 'P') {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          window.print();
+        }
+      }
+    });
+  </script>
 </body>
 </html>`;
                 const blob = new Blob([html], { type: "text/html" });
