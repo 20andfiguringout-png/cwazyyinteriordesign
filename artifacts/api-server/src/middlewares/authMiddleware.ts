@@ -85,3 +85,5 @@ export async function authMiddleware(
   req.user = refreshed.user;
   next();
 }
+
+export const requireAuth = authMiddleware;

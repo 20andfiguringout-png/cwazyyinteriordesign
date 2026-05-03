@@ -18,10 +18,10 @@ export default function HomePage() {
     <div className="min-h-screen bg-white">
       <section className="relative min-h-screen bg-cream-50 flex flex-col items-center justify-center pt-16 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-taupe-200/30 rounded-full blur-3xl" />
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] sm:w-[600px] h-[420px] sm:h-[600px] bg-taupe-200/30 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -35,7 +35,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-charcoal-600 leading-[1.05] mb-8"
+            className="font-serif text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-charcoal-600 leading-[1.05] mb-8"
           >
             Design the closet
             <br />
@@ -46,7 +46,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.25 }}
-            className="text-lg md:text-xl text-charcoal-400 max-w-xl mx-auto font-light leading-relaxed mb-10"
+            className="text-base sm:text-lg md:text-xl text-charcoal-400 max-w-xl mx-auto font-light leading-relaxed mb-10"
           >
             Tell us your space and wardrobe — we generate a precision layout, instantly.
           </motion.p>
@@ -86,9 +86,9 @@ export default function HomePage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9, duration: 0.5 }}
-          className="relative z-10 mt-20 mb-8"
+          className="relative z-10 mt-16 sm:mt-20 mb-8"
         >
-          <p className="font-serif text-2xl text-taupe-400 italic">Carved for you.</p>
+          <p className="font-serif text-xl sm:text-2xl text-taupe-400 italic">Carved for you.</p>
         </motion.div>
 
         <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white to-transparent" />
@@ -96,7 +96,7 @@ export default function HomePage() {
 
       <section className="py-28 bg-white relative overflow-hidden">
         <ArchitecturalGrid className="absolute inset-0" />
-        <div className="max-w-6xl mx-auto px-6 relative z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
@@ -151,15 +151,15 @@ export default function HomePage() {
             whileInView={{ y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-16"
+            className="text-center mb-12 sm:mb-16"
           >
             <span className="text-xs font-medium tracking-widest uppercase text-taupe-400">
               Personalised for you
             </span>
-            <h2 className="font-serif text-4xl md:text-5xl text-charcoal-600 mt-4 mb-4">
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-charcoal-600 mt-4 mb-4">
               Who are you designing for?
             </h2>
-            <p className="text-lg text-charcoal-400 max-w-xl mx-auto">
+            <p className="text-base sm:text-lg text-charcoal-400 max-w-xl mx-auto">
               Your path shapes how we ask the questions — and how we build the layout.
             </p>
           </motion.div>

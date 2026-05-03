@@ -38,12 +38,12 @@ export default function Navbar() {
           : 'bg-transparent'
       }`}
     >
-      <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="group flex items-center gap-2">
-          <span className="font-serif text-2xl font-bold tracking-tight transition-colors text-charcoal-600">
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <Link href="/" className="group flex items-center gap-2 min-w-0">
+          <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight transition-colors text-charcoal-600">
             Alvéo
           </span>
-          <span className={`text-xs font-light tracking-widest uppercase transition-colors hidden sm:block ${
+          <span className={`text-[10px] sm:text-xs font-light tracking-widest uppercase transition-colors hidden sm:block truncate ${
             scrolled || !isHome ? 'text-taupe-400' : 'text-taupe-500'
           }`}>
             Carved for you.
@@ -77,7 +77,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-2">
           <Link
             href="/configure"
-            className="inline-flex items-center gap-2 bg-charcoal-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-charcoal-500 transition-colors"
+            className="inline-flex items-center gap-2 bg-charcoal-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-charcoal-500 transition-colors shadow-sm"
           >
             Start Designing
           </Link>
@@ -93,7 +93,7 @@ export default function Navbar() {
         <button
           aria-label="Toggle menu"
           onClick={() => setMobileOpen((v) => !v)}
-          className="md:hidden p-2 rounded-md text-charcoal-500 hover:bg-cream-100 transition-colors"
+          className="md:hidden p-2 rounded-md text-charcoal-500 hover:bg-cream-100 transition-colors shrink-0"
         >
           {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -106,7 +106,7 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18 }}
-            className="md:hidden bg-white border-b border-cream-200 px-6 pb-6 pt-2 space-y-1"
+            className="md:hidden bg-white/98 backdrop-blur border-b border-cream-200 px-4 sm:px-6 pb-6 pt-2 space-y-1"
           >
             {navLinks.map(({ href, label }) => (
               <Link
