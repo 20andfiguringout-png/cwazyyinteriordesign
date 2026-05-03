@@ -70,6 +70,12 @@ export default function HomePage() {
             >
               Browse gallery
             </Link>
+            <Link
+              href="/alveo-pitch/"
+              className="inline-flex items-center gap-2 text-taupe-500 hover:text-charcoal-600 text-base font-medium transition-colors"
+            >
+              View pitch deck
+            </Link>
           </motion.div>
 
           <motion.p

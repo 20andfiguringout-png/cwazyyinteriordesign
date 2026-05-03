@@ -10,6 +10,7 @@ const navLinks = [
   { href: '/builder', label: 'Builder' },
   { href: '/clients', label: 'Clients' },
   { href: '/gallery', label: 'Gallery' },
+  { href: '/alveo-pitch/', label: 'Pitch Deck' },
   { href: '/about', label: 'About' },
   { href: '/faq', label: 'FAQ' },
 ];
@@ -81,6 +82,12 @@ export default function Navbar() {
           >
             Start Designing
           </Link>
+          <Link
+            href="/alveo-pitch/"
+            className="inline-flex items-center gap-2 bg-cream-100 text-charcoal-600 text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-cream-200 transition-colors shadow-sm"
+          >
+            Pitch Deck
+          </Link>
           <button
             aria-label="Toggle dark mode"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -124,6 +131,12 @@ export default function Navbar() {
               className="block mt-4 text-center bg-charcoal-600 text-white text-sm font-medium px-5 py-3 rounded-lg hover:bg-charcoal-500 transition-colors"
             >
               Start Designing
+            </Link>
+            <Link
+              href="/alveo-pitch/"
+              className="block mt-2 text-center bg-cream-100 text-charcoal-600 text-sm font-medium px-5 py-3 rounded-lg hover:bg-cream-200 transition-colors"
+            >
+              Pitch Deck
             </Link>
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}

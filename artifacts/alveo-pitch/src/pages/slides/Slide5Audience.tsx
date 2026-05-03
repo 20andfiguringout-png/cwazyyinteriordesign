@@ -114,7 +114,7 @@ export default function Slide5Audience() {
             letterSpacing: "0.02em",
           }}
         >
-          Two distinct audiences, one platform.
+          Designed for homeowners and interior designers.
         </p>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3vw" }}>
@@ -126,7 +126,7 @@ export default function Slide5Audience() {
           <div style={{ borderTop: "0.3vw solid #B5956A", paddingTop: "2.5vh" }}>
             <div style={{ fontSize: "1vw", fontFamily: "'DM Mono', monospace", color: "#B5956A", marginBottom: "1.5vh", letterSpacing: "0.05em", textTransform: "uppercase" }}>Segment B</div>
             <div style={{ fontSize: "2vw", fontWeight: 700, marginBottom: "2vh", letterSpacing: "-0.01em", lineHeight: 1.1 }}>Interior Designers</div>
-            <div style={{ fontSize: "1.5vw", color: "#444444", lineHeight: 1.5 }}>Generate client proposals in minutes instead of hours. Deliver precision SVG elevations at every stage of a project.</div>
+            <div style={{ fontSize: "1.5vw", color: "#444444", lineHeight: 1.5 }}>Generate client proposals in minutes instead of hours. Share polished pitch-ready decks and precision SVG elevations at every stage of a project.</div>
           </div>
         </div>
       </div>
