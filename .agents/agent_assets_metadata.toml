@@ -1,0 +1,26 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "LjR3OtWXXCMOthyljekJf"
+uri = "file://artifacts/alveo-promo/title-frame.png"
+type = "image"
+title = "Alvéo promo title frame"
+
+[[generated]]
+id = "uD_eD1-Fwu4Sz5iasIaQD"
+uri = "file://artifacts/alveo-promo/layout-scene.png"
+type = "image"
+title = "Instant layout scene"
+
+[[generated]]
+id = "7J405hGIZa5Q0YbT_YewV"
+uri = "file://artifacts/alveo-promo/precision-scene.png"
+type = "image"
+title = "Precision design scene"
+
+[[generated]]
+id = "AtSruHZ-KnWLCToGSYxMO"
+uri = "file://artifacts/alveo-mobile/assets/images/icon.png"
+type = "image"
+title = "generated_image"
