@@ -35,6 +35,27 @@ A closet design configurator app for interior designers with:
 - PDF export and design sharing features
 - Dark/light mode support
 
+#### Feature Set (v2 — all 13 tasks complete)
+- **T001/T012 Gallery**: finish filter chips (Light Oak/Warm Walnut/Dark Espresso/Painted White), heart-button mood board, `MoodboardDrawer` slide-in panel (localStorage `alveo_moodboard`)
+- **T002 Studio Undo/Redo**: `undoStack`/`redoStack` state with Ctrl+Z/Y keyboard shortcuts; Undo/Redo buttons in bottom nav
+- **T002 Finish picker**: 4 swatch picker (Light Oak, Warm Walnut, Dark Espresso, Painted White) in Step 3 sidebar; finish stored in `alveo_studio_dims` and saved design config
+- **T002 Module resize**: drag right-edge handle on each module column to resize its width inline
+- **T003 3D preview panel**: live isometric SVG panel (`StudioMiniPreview`) showing modules as 3D boxes with chosen finish colours; summary card with module count breakdown
+- **T004 Quick-share**: Share modal in Dashboard copies `/portal/:token` link to clipboard with animated feedback
+- **T005 Design versioning**: `tags[]` + `finish` + `versions[]` saved in design config JSONB; tags input in SavePanel
+- **T006 Comparison**: checkbox select 2 designs from Dashboard → `CompareModal` side-by-side diff (dimensions, finish, module count, tags)
+- **T007 Folder/tag org**: tags saved per design; tag filter chips on Dashboard Recent Designs section
+- **T008 Room shape step**: Step 1 renamed "Room Footprint" with enhanced visual floor-plan cards
+- **T009 Module comments**: Comments tab in Client Portal with module chip selector (`[ModuleName] text` prefix); fetches/posts to `/api/design-comments`
+- **T010 Revision flow**: "Request Changes" button in portal review tab with note; enhanced status UI for revision vs approval
+- **T011 Approval reminders**: days-since badge on pending approvals; "Send reminder" button in Dashboard
+
+#### localStorage keys
+- `alveo_builder_modules` — modules from Studio
+- `alveo_studio_dims` — `{ wallW, wallH, wallD, finish }`
+- `alveo_saved_designs` / `alveo_designs` — saved design arrays
+- `alveo_moodboard` — array of gallery item IDs saved to mood board
+
 ### `artifacts/api-server` — Express API Server (preview: `/api`)
 Backend with routes for:
 - `/api/auth/register` — email+password signup (bcryptjs)
