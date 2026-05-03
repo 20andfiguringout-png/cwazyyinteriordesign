@@ -20,7 +20,7 @@ function NativeTabLayout() {
         <Label>Configure</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="gallery">
-        <Icon sf={{ default: "photo.on.rectangle", selected: "photo.on.rectangle.fill" }} />
+        <Icon sf={{ default: "photo.on.rectangle", selected: "photo.fill.on.rectangle.fill" }} />
         <Label>Gallery</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="clients">

@@ -17,7 +17,7 @@ const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 export async function listDesigns(userEmail: string): Promise<SavedDesign[]> {
   if (!userEmail) return [];
   try {
-    const headers = await makeAuthHeaders(userEmail);
+    const headers = makeAuthHeaders(userEmail);
     const res = await fetch(`${BASE}/api/designs`, {
       headers,
       credentials: "include",
@@ -36,7 +36,7 @@ export async function addDesign(
 ): Promise<SavedDesign[]> {
   if (!userEmail) return [design];
   try {
-    const headers = await makeAuthHeaders(userEmail);
+    const headers = makeAuthHeaders(userEmail);
     const res = await fetch(`${BASE}/api/designs`, {
       method: "POST",
       headers,
@@ -57,7 +57,7 @@ export async function removeDesign(
 ): Promise<SavedDesign[]> {
   if (!userEmail) return [];
   try {
-    const headers = await makeAuthHeaders(userEmail);
+    const headers = makeAuthHeaders(userEmail);
     const res = await fetch(`${BASE}/api/designs`, {
       method: "DELETE",
       headers,

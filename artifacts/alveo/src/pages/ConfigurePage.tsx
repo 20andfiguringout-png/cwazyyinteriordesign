@@ -136,30 +136,37 @@ export default function ConfigurePage() {
     }
 
     if (storedEmail) {
-      getAuthToken(storedEmail)
-        .then((token) =>
-          fetch(`${BASE}/api/designs`, {
-            headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-            cache: "no-store",
+      try {
+        const token = getAuthToken(storedEmail);
+        fetch(`${BASE}/api/designs`, {
+          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+          cache: "no-store",
+        })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (data && Array.isArray(data.designs)) {
+              setSavedDesigns(data.designs as SavedDesign[]);
+            } else {
+              const fallback = localStorage.getItem("alveo-saved-designs");
+              if (fallback) setSavedDesigns(JSON.parse(fallback) as SavedDesign[]);
+            }
           })
-        )
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (data && Array.isArray(data.designs)) {
-            setSavedDesigns(data.designs as SavedDesign[]);
-          } else {
+          .catch(() => {
             const fallback = localStorage.getItem("alveo-saved-designs");
-            if (fallback) setSavedDesigns(JSON.parse(fallback) as SavedDesign[]);
-          }
-        })
-        .catch(() => {
-          const fallback = localStorage.getItem("alveo-saved-designs");
-          if (fallback) {
-            try { setSavedDesigns(JSON.parse(fallback) as SavedDesign[]); } catch { /* ignore */ }
-          }
-        })
-        .finally(() => { loadedRef.current = true; });
-      return;
+            if (fallback) {
+              try { setSavedDesigns(JSON.parse(fallback) as SavedDesign[]); } catch { /* ignore */ }
+            }
+          })
+          .finally(() => { loadedRef.current = true; });
+        return;
+      } catch {
+        const fallback = localStorage.getItem("alveo-saved-designs");
+        if (fallback) {
+          try { setSavedDesigns(JSON.parse(fallback) as SavedDesign[]); } catch { /* ignore */ }
+        }
+        loadedRef.current = true;
+        return;
+      }
     }
 
     try {
@@ -246,13 +253,11 @@ export default function ConfigurePage() {
     });
 
     if (userEmail) {
-      makeAuthHeaders(userEmail).then((headers) =>
-        fetch(`${BASE}/api/designs`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ design }),
-        })
-      ).catch(() => { /* ignore cloud sync failures */ });
+      try {
+        const headers = makeAuthHeaders(userEmail);
+        fetch(`${BASE}/api/designs`, { method: "POST", headers, body: JSON.stringify({ design }) })
+          .catch(() => { /* ignore cloud sync failures */ });
+      } catch { /* no token — skip sync */ }
     }
   };
 
@@ -261,13 +266,11 @@ export default function ConfigurePage() {
     trackEvent("design_removed", { id });
 
     if (userEmail) {
-      makeAuthHeaders(userEmail).then((headers) =>
-        fetch(`${BASE}/api/designs`, {
-          method: "DELETE",
-          headers,
-          body: JSON.stringify({ id }),
-        })
-      ).catch(() => { /* ignore cloud sync failures */ });
+      try {
+        const headers = makeAuthHeaders(userEmail);
+        fetch(`${BASE}/api/designs`, { method: "DELETE", headers, body: JSON.stringify({ id }) })
+          .catch(() => { /* ignore cloud sync failures */ });
+      } catch { /* no token — skip sync */ }
     }
   };
 

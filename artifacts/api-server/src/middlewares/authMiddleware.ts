@@ -9,6 +9,7 @@ import {
   updateSession,
   type SessionData,
 } from "../lib/auth";
+import { verifyToken } from "./auth.js";
 
 declare global {
   namespace Express {
@@ -61,6 +62,24 @@ export async function authMiddleware(
   req.isAuthenticated = function (this: Request) {
     return this.user != null;
   } as Request["isAuthenticated"];
+
+  const authHeader = req.headers["authorization"];
+  const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+
+  if (bearerToken) {
+    const jwtEmail = verifyToken(bearerToken);
+    if (jwtEmail) {
+      req.user = {
+        id: jwtEmail,
+        email: jwtEmail,
+        firstName: null,
+        lastName: null,
+        profileImageUrl: null,
+      };
+      next();
+      return;
+    }
+  }
 
   const sid = getSessionId(req);
   if (!sid) {

@@ -145,8 +145,13 @@ router.get("/design-comments", async (req: Request, res: Response) => {
     if (authorNeedle) { conditions.push(`LOWER(author_name) LIKE $${pi++}`); params.push(`%${authorNeedle}%`); }
     if (mentionsOnly) { conditions.push(`array_length(mentions, 1) > 0`); }
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-    const orderBy = sort === "oldest" ? "ASC" : "DESC";
-    const orderCol = sort === "most-mentioned" ? "array_length(mentions, 1) DESC NULLS LAST, created_at" : "created_at";
+    // Explicit allowlist — never interpolate user input directly into SQL identifiers
+    const SORT_CLAUSES: Record<string, { col: string; dir: string }> = {
+      newest:        { col: "created_at",                              dir: "DESC" },
+      oldest:        { col: "created_at",                              dir: "ASC"  },
+      "most-mentioned": { col: "array_length(mentions, 1) DESC NULLS LAST, created_at", dir: "ASC" },
+    };
+    const { col: orderCol, dir: orderBy } = SORT_CLAUSES[sort] ?? SORT_CLAUSES["newest"]!;
     try {
       const countResult = await pool.query<{ count: string }>(`SELECT COUNT(*) FROM alveo_design_comments ${where}`, params);
       const total = parseInt(countResult.rows[0]?.count ?? "0", 10);
@@ -178,7 +183,7 @@ router.get("/design-comments", async (req: Request, res: Response) => {
 });
 
 router.post("/design-comments", requireAuth, async (req: Request, res: Response) => {
-  const ip = (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || "unknown";
+  const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
   const userEmail = getUserEmailFromRequest(req);
   if (!userEmail) { res.status(401).json({ error: "Unauthorized" }); return; }
   const limit = checkRateLimit(`design-comments:${ip}`, 60_000, 80);

@@ -26,14 +26,28 @@ if (!basePath) {
   );
 }
 
+const isReplit = process.env.REPL_ID !== undefined;
+
+// When running locally (not on Replit), proxy /api/* to the API server so the
+// browser's same-origin calls work without CORS issues.
+const apiPort = process.env.API_PORT ?? "8080";
+const localProxy = !isReplit
+  ? {
+      "/api": {
+        target: `http://localhost:${apiPort}`,
+        changeOrigin: true,
+      },
+    }
+  : undefined;
+
 export default defineConfig({
   base: basePath,
+  envDir: path.resolve(import.meta.dirname, "..", ".."),
   plugins: [
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
+    ...(process.env.NODE_ENV !== "production" && isReplit
       ? [
           await import("@replit/vite-plugin-cartographer").then((m) =>
             m.cartographer({
@@ -63,6 +77,7 @@ export default defineConfig({
     strictPort: true,
     host: "0.0.0.0",
     allowedHosts: true,
+    proxy: localProxy,
     fs: {
       strict: false,
     },

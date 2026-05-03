@@ -55,7 +55,7 @@ export default function ClientsPage() {
   async function fetchClients(email: string) {
     setLoading(true);
     try {
-      const headers = await makeAuthHeaders(email);
+      const headers = makeAuthHeaders(email);
       const res = await fetch(`${BASE}/api/clients`, { headers });
       if (res.ok) {
         const data = await res.json() as { clients: Client[] };
@@ -83,7 +83,7 @@ export default function ClientsPage() {
     if (!form.name.trim() || !userEmail) return;
     setSaving(true);
     try {
-      const headers = await makeAuthHeaders(userEmail);
+      const headers = makeAuthHeaders(userEmail);
       const res = await fetch(`${BASE}/api/clients`, {
         method: "POST",
         headers,
@@ -108,7 +108,7 @@ export default function ClientsPage() {
 
   async function deleteClient(id: string) {
     if (!userEmail) return;
-    const headers = await makeAuthHeaders(userEmail);
+    const headers = makeAuthHeaders(userEmail);
     const res = await fetch(`${BASE}/api/clients`, {
       method: "DELETE",
       headers,
