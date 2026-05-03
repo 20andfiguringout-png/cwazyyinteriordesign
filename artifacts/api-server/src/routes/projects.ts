@@ -80,7 +80,7 @@ router.post("/projects", requireAuthJwt, async (req: Request, res: Response) => 
 
 router.put("/projects/:id", requireAuthJwt, async (req: Request, res: Response) => {
   const email  = (req as AuthedReq).userEmail;
-  const { id } = req.params;
+  const id     = req.params.id as string;
   const parsed = projectSchema.partial().safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
   try {
@@ -109,7 +109,7 @@ router.put("/projects/:id", requireAuthJwt, async (req: Request, res: Response) 
 
 router.delete("/projects/:id", requireAuthJwt, async (req: Request, res: Response) => {
   const email  = (req as AuthedReq).userEmail;
-  const { id } = req.params;
+  const id     = req.params.id as string;
   try {
     await pool.query("UPDATE alveo_designs SET project_id = NULL WHERE project_id = $1 AND user_email = $2", [id, email]);
     await pool.query("DELETE FROM alveo_projects WHERE id = $1 AND owner_email = $2", [id, email]);
@@ -123,7 +123,7 @@ router.delete("/projects/:id", requireAuthJwt, async (req: Request, res: Respons
 
 router.post("/projects/:id/designs", requireAuthJwt, async (req: Request, res: Response) => {
   const email     = (req as AuthedReq).userEmail;
-  const projectId = req.params.id;
+  const projectId = req.params.id as string;
 
   const parsed = linkDesignSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: "designId required and must be a non-empty string" }); return; }

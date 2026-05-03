@@ -232,7 +232,7 @@ export default function ConfigureScreen() {
                   placeholder={placeholder}
                   placeholderTextColor={colors.mutedForeground}
                   keyboardType="numeric"
-                  value={(config as Record<string, string>)[key]}
+                  value={(config as unknown as Record<string, string>)[key]}
                   onChangeText={(val) => setConfig((c) => ({ ...c, [key]: val }))}
                 />
               </View>

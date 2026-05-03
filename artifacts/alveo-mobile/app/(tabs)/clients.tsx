@@ -259,7 +259,7 @@ export default function ClientsScreen() {
                   ]}
                   placeholder={placeholder}
                   placeholderTextColor={colors.mutedForeground}
-                  value={(form as Record<string, string>)[key]}
+                  value={(form as unknown as Record<string, string>)[key]}
                   onChangeText={(val) => setForm((f) => ({ ...f, [key]: val }))}
                 />
               </View>
