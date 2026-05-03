@@ -2,7 +2,7 @@ import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import { Link } from "wouter";
 import {
   ArrowLeft, Trash2, GripVertical, Box, RotateCcw, Plus, Minus,
-  ChevronRight, Layers, Ruler, Info, Save, CheckCircle2, FolderPlus, X,
+  ChevronRight, Layers, Ruler, Info, Save, CheckCircle2, FolderPlus, X, ExternalLink,
 } from "lucide-react";
 import { ClosetSVGRenderer } from "@/renderer/ClosetSVGRenderer";
 import { ClosetIsometricRenderer } from "@/renderer/ClosetIsometricRenderer";
@@ -513,18 +513,55 @@ function StatsPanel({
       <div className="flex-1 flex flex-col min-h-0">
         <div className="px-3 py-2 border-b border-stone-100 flex items-center justify-between">
           <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Preview</p>
-          <div className="flex items-center gap-0.5 bg-stone-100 rounded-md p-0.5">
+          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5 bg-stone-100 rounded-md p-0.5">
+              <button
+                onClick={() => onDrawingModeChange("elevation")}
+                className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${drawingMode === "elevation" ? "bg-white text-charcoal-600 shadow-sm" : "text-stone-400"}`}
+              >
+                2D
+              </button>
+              <button
+                onClick={() => onDrawingModeChange("3d")}
+                className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${drawingMode === "3d" ? "bg-white text-charcoal-600 shadow-sm" : "text-stone-400"}`}
+              >
+                3D
+              </button>
+            </div>
             <button
-              onClick={() => onDrawingModeChange("elevation")}
-              className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${drawingMode === "elevation" ? "bg-white text-charcoal-600 shadow-sm" : "text-stone-400"}`}
+              onClick={() => {
+                if (!svgContent) return;
+                const label = drawingMode === "3d" ? "3D" : "2D";
+                const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alvéo — ${label} Preview</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #f7f6f4; }
+    body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; font-family: system-ui, sans-serif; }
+    .badge { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #9c9590; }
+    .svg-wrap { width: min(92vw, 92vh); aspect-ratio: 1; background: #fff; border-radius: 12px; box-shadow: 0 2px 24px rgba(0,0,0,.08); padding: 24px; display: flex; align-items: center; justify-content: center; }
+    .svg-wrap svg { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <span class="badge">Alvéo · ${label} Preview</span>
+  <div class="svg-wrap">${svgContent}</div>
+</body>
+</html>`;
+                const blob = new Blob([html], { type: "text/html" });
+                const url = URL.createObjectURL(blob);
+                const w = window.open(url, "_blank");
+                if (w) setTimeout(() => URL.revokeObjectURL(url), 60_000);
+              }}
+              disabled={!svgContent}
+              title="Open preview in new tab"
+              className="p-1 rounded text-stone-400 hover:text-charcoal-600 hover:bg-stone-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              2D
-            </button>
-            <button
-              onClick={() => onDrawingModeChange("3d")}
-              className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${drawingMode === "3d" ? "bg-white text-charcoal-600 shadow-sm" : "text-stone-400"}`}
-            >
-              3D
+              <ExternalLink size={12} />
             </button>
           </div>
         </div>
