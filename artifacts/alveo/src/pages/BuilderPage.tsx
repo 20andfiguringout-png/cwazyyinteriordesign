@@ -586,12 +586,9 @@ function StatsPanel({
   <div class="svg-wrap">${svgContent}</div>
   <script>
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'p' || e.key === 'P') {
-        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-          e.preventDefault();
-          window.print();
-        }
-      }
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'p' || e.key === 'P') { e.preventDefault(); window.print(); }
+      if (e.key === 'Escape') { window.close(); }
     });
   </script>
 </body>
