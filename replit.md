@@ -55,4 +55,19 @@ Tables in PostgreSQL (managed via Drizzle ORM in `lib/db/src/schema/`):
 - `alveo_design_audit` — audit log for design changes
 - `alveo_clients` — client management records
 
+## Required Environment Variables
+
+### `artifacts/api-server`
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | Yes | PostgreSQL connection string (provided by Replit DB integration) |
+| `JWT_SECRET` | **Yes in production** | Secret for signing JWT auth tokens. Server refuses to start in production if absent. In development a fallback default is used. |
+| `EVENTS_ADMIN_TOKEN` | No | Token for admin-only routes (`GET /api/events`, `PATCH /design-comments` mention-ack). |
+
+### `artifacts/alveo`
+| Variable | Required | Description |
+|---|---|---|
+| `PORT` | Yes | Set by Replit workflow env; Vite dev server listens on this port. |
+| `BASE_PATH` | Yes | Set by Replit workflow env; used as Vite `base` for asset paths. |
+
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.

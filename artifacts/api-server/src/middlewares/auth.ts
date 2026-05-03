@@ -2,7 +2,14 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 
-const JWT_SECRET = process.env["JWT_SECRET"] ?? "alveo-dev-secret-change-in-production";
+const isProduction = process.env["NODE_ENV"] === "production";
+const envSecret    = process.env["JWT_SECRET"];
+
+if (isProduction && !envSecret) {
+  throw new Error("JWT_SECRET environment variable must be set in production");
+}
+
+const JWT_SECRET = envSecret ?? "alveo-dev-secret-change-in-production";
 
 const tokenPayloadSchema = z.object({
   email: z.string().email(),
