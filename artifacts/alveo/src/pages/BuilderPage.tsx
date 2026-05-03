@@ -1421,9 +1421,15 @@ export default function BuilderPage() {
     } catch { return DEFAULT_MODULES; }
   });
   const [history, setHistory] = useState<BuilderModule[][]>([]);
-  const [wallW, setWallW] = useState(120);
-  const [wallH, setWallH] = useState(96);
-  const [wallD, setWallD] = useState(24);
+  const [wallW, setWallW] = useState(() => {
+    try { const d = JSON.parse(localStorage.getItem("alveo_studio_dims") || "null"); return d?.wallW ?? 120; } catch { return 120; }
+  });
+  const [wallH, setWallH] = useState(() => {
+    try { const d = JSON.parse(localStorage.getItem("alveo_studio_dims") || "null"); return d?.wallH ?? 96; } catch { return 96; }
+  });
+  const [wallD, setWallD] = useState(() => {
+    try { const d = JSON.parse(localStorage.getItem("alveo_studio_dims") || "null"); return d?.wallD ?? 24; } catch { return 24; }
+  });
   const [woodFinish, setWoodFinish] = useState<"light" | "medium" | "dark" | "white">("medium");
   const [drawingMode, setDrawingMode] = useState<"elevation" | "3d">("elevation");
   const [selectedId, setSelectedId] = useState<string | null>(null);

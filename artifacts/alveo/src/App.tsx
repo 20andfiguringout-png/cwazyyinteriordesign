@@ -11,6 +11,7 @@ import AboutPage from "@/pages/AboutPage";
 import FAQPage from "@/pages/FAQPage";
 import AdminAnalyticsPage from "@/pages/AdminAnalyticsPage";
 import BuilderPage from "@/pages/BuilderPage";
+import StudioPage from "@/pages/StudioPage";
 import ClientsPage from "@/pages/ClientsPage";
 import LoginPage from "@/pages/LoginPage";
 import SignupPage from "@/pages/SignupPage";
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/portal/:token" component={ClientPortalPage} />
       <Route path="/clients" component={ClientsPage} />
       <Route path="/builder" component={BuilderPage} />
+      <Route path="/studio" component={StudioPage} />
       <Route path="/admin"><Redirect to="/admin/analytics" /></Route>
       <Route path="/admin/analytics" component={AdminAnalyticsPage} />
       <Route component={NotFound} />
