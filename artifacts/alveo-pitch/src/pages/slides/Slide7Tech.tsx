@@ -111,6 +111,11 @@ export default function Slide7Tech() {
               <div style={{ fontSize: "1vw", fontFamily: "'DM Mono', monospace", color: "#999999", marginBottom: "0.5vh" }}>FRONTEND</div>
               <div style={{ fontSize: "1.6vw", fontWeight: 600 }}>React + TypeScript</div>
             </div>
+          <div style={{ borderTop: "0.1vw solid #C8C8C4", paddingTop: "1.5vh" }}>
+            <div style={{ fontSize: "1vw", fontFamily: "'DM Mono', monospace", color: "#999999", marginBottom: "0.5vh" }}>DATA</div>
+            <div style={{ fontSize: "1.6vw", fontWeight: 600 }}>Saved designs + versions</div>
+            <div style={{ fontSize: "1.3vw", color: "#666666", marginTop: "0.5vh" }}>History for approvals and iteration</div>
+          </div>
             <div style={{ borderTop: "0.1vw solid #C8C8C4", paddingTop: "1.5vh" }}>
               <div style={{ fontSize: "1vw", fontFamily: "'DM Mono', monospace", color: "#999999", marginBottom: "0.5vh" }}>ENGINE</div>
               <div style={{ fontSize: "1.6vw", fontWeight: 600 }}>Custom SVG Layout Engine</div>

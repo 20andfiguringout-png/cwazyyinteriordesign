@@ -154,6 +154,29 @@ export default function Slide4Features() {
             <div style={{ fontSize: "1vw", color: "#444444", lineHeight: 1.4 }}>Layout variants for faster decisions</div>
           </div>
         </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1.5vw", marginTop: "1.5vw" }}>
+          <div style={{ backgroundColor: "#111111", color: "#F4F4F0", padding: "1.5vw 1.4vw" }}>
+            <div style={{ fontSize: "1vw", fontFamily: "'DM Mono', monospace", color: "#B5956A", marginBottom: "1vh", letterSpacing: "0.05em" }}>009</div>
+            <div style={{ fontSize: "1.1vw", fontWeight: 700, marginBottom: "0.8vh", textTransform: "uppercase" }}>Approvals</div>
+            <div style={{ fontSize: "1vw", color: "#CCCCCC", lineHeight: 1.4 }}>Clear sign-off before production</div>
+          </div>
+          <div style={{ border: "0.2vw solid #111111", padding: "1.5vw 1.4vw", backgroundColor: "#F9F8F4" }}>
+            <div style={{ fontSize: "1vw", fontFamily: "'DM Mono', monospace", color: "#B5956A", marginBottom: "1vh", letterSpacing: "0.05em" }}>010</div>
+            <div style={{ fontSize: "1.1vw", fontWeight: 700, marginBottom: "0.8vh", textTransform: "uppercase" }}>Versioning</div>
+            <div style={{ fontSize: "1vw", color: "#444444", lineHeight: 1.4 }}>Track changes across iterations</div>
+          </div>
+          <div style={{ border: "0.2vw solid #111111", padding: "1.5vw 1.4vw", backgroundColor: "#F9F8F4" }}>
+            <div style={{ fontSize: "1vw", fontFamily: "'DM Mono', monospace", color: "#B5956A", marginBottom: "1vh", letterSpacing: "0.05em" }}>011</div>
+            <div style={{ fontSize: "1.1vw", fontWeight: 700, marginBottom: "0.8vh", textTransform: "uppercase" }}>Specs</div>
+            <div style={{ fontSize: "1vw", color: "#444444", lineHeight: 1.4 }}>Dimensions and material notes</div>
+          </div>
+          <div style={{ border: "0.2vw solid #111111", padding: "1.5vw 1.4vw", backgroundColor: "#F9F8F4" }}>
+            <div style={{ fontSize: "1vw", fontFamily: "'DM Mono', monospace", color: "#B5956A", marginBottom: "1vh", letterSpacing: "0.05em" }}>012</div>
+            <div style={{ fontSize: "1.1vw", fontWeight: 700, marginBottom: "0.8vh", textTransform: "uppercase" }}>Pricing</div>
+            <div style={{ fontSize: "1vw", color: "#444444", lineHeight: 1.4 }}>Fast estimates for proposals</div>
+          </div>
+        </div>
       </div>
 
       <div

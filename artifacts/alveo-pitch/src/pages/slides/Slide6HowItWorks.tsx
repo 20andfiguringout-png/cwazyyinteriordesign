@@ -123,8 +123,8 @@ export default function Slide6HowItWorks() {
           </div>
           <div style={{ borderTop: "0.3vw solid #111111", paddingTop: "2vh" }}>
             <div style={{ fontSize: "1vw", fontFamily: "'DM Mono', monospace", color: "#B5956A", marginBottom: "1vh", letterSpacing: "0.05em" }}>STEP 04</div>
-            <div style={{ fontSize: "1.7vw", fontWeight: 700, marginBottom: "1vh", lineHeight: 1.1 }}>Receive your layout</div>
-            <div style={{ fontSize: "1.4vw", color: "#555555", lineHeight: 1.4 }}>A precision elevation, ready to build or share</div>
+            <div style={{ fontSize: "1.7vw", fontWeight: 700, marginBottom: "1vh", lineHeight: 1.1 }}>Approve, price, and export</div>
+            <div style={{ fontSize: "1.4vw", color: "#555555", lineHeight: 1.4 }}>A precision elevation with specs, pricing, and client-ready output</div>
           </div>
         </div>
       </div>
