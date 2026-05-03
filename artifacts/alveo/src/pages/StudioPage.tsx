@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, type ReactElement } from "react";
 import { useLocation, Link } from "wouter";
-import { ArrowLeft, ArrowRight, Check, Plus, GripVertical, Trash2, Bookmark, BookmarkCheck, ExternalLink, AlertCircle, FolderOpen, Clock, X, Loader2, Pencil } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Plus, GripVertical, Trash2, Bookmark, BookmarkCheck, ExternalLink, AlertCircle, FolderOpen, Clock, X, Loader2, Pencil, Copy } from "lucide-react";
 import { BUILTIN_CATALOGUE, getCat, type CatalogueEntry } from "@/types/catalogue";
 import { getStoredToken } from "@/lib/AuthContext";
 
@@ -645,6 +645,28 @@ function LoadModal({ onLoad, onClose }: LoadModalProps) {
     }
   };
 
+  const executeDuplicate = async (d: AnyDesign) => {
+    const newId = `studio_${Date.now().toString(36)}`;
+    const copy: AnyDesign = {
+      ...d,
+      id: newId,
+      name: `Copy of ${d.name}`,
+      savedAt: new Date().toISOString(),
+    };
+    setDesigns((prev) => [copy, ...prev]);
+    _localSave(copy);
+    const token = getStoredToken();
+    if (token) {
+      try {
+        await fetch(`${BASE}/api/designs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ design: copy }),
+        });
+      } catch { /* already added locally */ }
+    }
+  };
+
   const executeDelete = async (id: string) => {
     setDesigns((prev) => prev.filter((d) => d.id !== id));
     setDeletingId(null);
@@ -800,12 +822,17 @@ function LoadModal({ onLoad, onClose }: LoadModalProps) {
                   ) : (
                     <>
                       <button onClick={(e) => { e.stopPropagation(); startRename(d); }}
-                        title="Rename this design"
+                        title="Rename"
                         className="p-1.5 rounded-lg text-stone-300 hover:text-taupe-600 hover:bg-taupe-50 opacity-0 group-hover:opacity-100 transition-all">
                         <Pencil size={12}/>
                       </button>
+                      <button onClick={(e) => { e.stopPropagation(); executeDuplicate(d); }}
+                        title="Duplicate"
+                        className="p-1.5 rounded-lg text-stone-300 hover:text-blue-500 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-all">
+                        <Copy size={12}/>
+                      </button>
                       <button onClick={(e) => { e.stopPropagation(); setDeletingId(d.id); setRenamingId(null); }}
-                        title="Delete this design"
+                        title="Delete"
                         className="p-1.5 rounded-lg text-stone-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all">
                         <Trash2 size={12}/>
                       </button>
