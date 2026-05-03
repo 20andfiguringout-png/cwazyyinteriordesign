@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Alveo closet elevation">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fef7ed"/>
+      <stop offset="100%" stop-color="#f2ede6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="110" y="110" width="980" height="410" fill="#f8f4ef" stroke="#b59d7a" stroke-width="6"/>
+  <rect x="160" y="160" width="280" height="310" fill="#ede3d5" stroke="#8d6e63" stroke-width="3"/>
+  <rect x="460" y="160" width="300" height="310" fill="#ede3d5" stroke="#8d6e63" stroke-width="3"/>
+  <rect x="780" y="160" width="260" height="310" fill="#ede3d5" stroke="#8d6e63" stroke-width="3"/>
+  <line x1="160" y1="235" x2="440" y2="235" stroke="#8d6e63" stroke-width="4"/>
+  <line x1="460" y1="235" x2="760" y2="235" stroke="#8d6e63" stroke-width="4"/>
+  <line x1="780" y1="235" x2="1040" y2="235" stroke="#8d6e63" stroke-width="4"/>
+  <text x="120" y="560" font-family="Georgia, serif" font-size="56" fill="#2e2e2e">Alveo</text>
+  <text x="335" y="560" font-family="Arial, sans-serif" font-size="28" fill="#8d6e63">Closet Configurator</text>
+</svg>
