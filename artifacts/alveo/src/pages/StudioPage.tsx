@@ -1230,8 +1230,8 @@ export default function StudioPage() {
                 <span className={`text-[10px] font-mono tabular-nums ${totalUsed>wallW?"text-red-500":"text-stone-400"}`}>
                   {totalUsed}″ / {wallW}″
                 </span>
-                <span className={`text-[10px] font-bold tabular-nums ${totalUsed>wallW?"text-red-500":totalUsed/wallW>0.9?"text-amber-500":"text-taupe-500"}`}>
-                  {Math.round((totalUsed/wallW)*100)}%
+                <span className={`text-[10px] font-bold tabular-nums ${totalUsed>wallW?"text-red-500":wallW>0&&totalUsed/wallW>0.9?"text-amber-500":"text-taupe-500"}`}>
+                  {wallW > 0 ? Math.round((totalUsed/wallW)*100) : 0}%
                 </span>
               </div>
               <div className="w-20 h-1.5 bg-stone-100 rounded-full overflow-hidden">
