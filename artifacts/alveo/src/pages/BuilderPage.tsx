@@ -786,7 +786,14 @@ function SelectedModulePanel({
 // ─── BuilderPage ──────────────────────────────────────────────────────────────
 
 export default function BuilderPage() {
-  const [modules, setModules] = useState<BuilderModule[]>(DEFAULT_MODULES);
+  const [modules, setModules] = useState<BuilderModule[]>(() => {
+    try {
+      const raw = localStorage.getItem("alveo_builder_modules");
+      if (!raw) return DEFAULT_MODULES;
+      const parsed = JSON.parse(raw) as BuilderModule[];
+      return parsed.length > 0 ? parsed : DEFAULT_MODULES;
+    } catch { return DEFAULT_MODULES; }
+  });
   const [wallW, setWallW] = useState(120);
   const [wallH, setWallH] = useState(96);
   const [wallD, setWallD] = useState(24);
@@ -795,6 +802,10 @@ export default function BuilderPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const selectedModule = modules.find((m) => m.id === selectedId) ?? null;
+
+  useEffect(() => {
+    localStorage.setItem("alveo_builder_modules", JSON.stringify(modules));
+  }, [modules]);
 
   // ── Layout conversion ────────────────────────────────────────────────────────
   const totalUsed = modules.reduce((s, m) => s + m.width, 0);

@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Sun, Moon } from 'lucide-react';
+import { Menu, X, Sun, Moon, LogIn, LayoutDashboard, LogOut, User } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { useAuth } from '@/lib/AuthContext';
 
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/configure', label: 'Configure' },
   { href: '/builder', label: 'Builder' },
-  { href: '/clients', label: 'Clients' },
   { href: '/gallery', label: 'Gallery' },
-  { href: '/alveo-pitch/', label: 'Pitch Deck' },
   { href: '/about', label: 'About' },
   { href: '/faq', label: 'FAQ' },
 ];
@@ -20,6 +19,8 @@ export default function Navbar() {
   const { theme, setTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -27,9 +28,10 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  useEffect(() => { setMobileOpen(false); }, [pathname]);
+  useEffect(() => { setMobileOpen(false); setUserMenuOpen(false); }, [pathname]);
 
   const isHome = pathname === '/';
+  const displayName = user?.firstName ?? user?.email?.split('@')[0] ?? 'Account';
 
   return (
     <header
@@ -51,7 +53,7 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <ul className="hidden md:flex items-center gap-8">
+        <ul className="hidden md:flex items-center gap-6">
           {navLinks.map(({ href, label }) => {
             const active = pathname === href;
             return (
@@ -73,21 +75,73 @@ export default function Navbar() {
               </li>
             );
           })}
+          {user && (
+            <li>
+              <Link
+                href="/clients"
+                className={`relative text-sm font-medium tracking-wide transition-colors ${
+                  pathname === '/clients' ? 'text-charcoal-600' : 'text-charcoal-400 hover:text-charcoal-600'
+                }`}
+              >
+                Clients
+              </Link>
+            </li>
+          )}
         </ul>
 
         <div className="hidden md:flex items-center gap-2">
           <Link
             href="/configure"
-            className="inline-flex items-center gap-2 bg-charcoal-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-charcoal-500 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 bg-charcoal-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-charcoal-500 transition-colors shadow-sm"
           >
             Start Designing
           </Link>
-          <Link
-            href="/alveo-pitch/"
-            className="inline-flex items-center gap-2 bg-cream-100 text-charcoal-600 text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-cream-200 transition-colors shadow-sm"
-          >
-            Pitch Deck
-          </Link>
+
+          {user ? (
+            <div className="relative">
+              <button
+                onClick={() => setUserMenuOpen((v) => !v)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-cream-300 text-charcoal-600 hover:bg-cream-50 text-sm font-medium transition-colors"
+              >
+                <div className="w-6 h-6 rounded-full bg-taupe-200 flex items-center justify-center text-taupe-700 text-xs font-bold shrink-0">
+                  {displayName[0]?.toUpperCase()}
+                </div>
+                <span className="max-w-24 truncate">{displayName}</span>
+              </button>
+              <AnimatePresence>
+                {userMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 4 }}
+                    className="absolute right-0 top-full mt-2 w-48 bg-white border border-cream-200 rounded-xl shadow-lg py-1 z-50"
+                  >
+                    <div className="px-4 py-2 border-b border-cream-100">
+                      <p className="text-xs text-charcoal-400 truncate">{user.email}</p>
+                    </div>
+                    <Link href="/dashboard" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal-600 hover:bg-cream-50">
+                      <LayoutDashboard size={15} /> Dashboard
+                    </Link>
+                    <button
+                      onClick={() => { logout(); setUserMenuOpen(false); }}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal-500 hover:bg-cream-50 w-full text-left"
+                    >
+                      <LogOut size={15} /> Sign out
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 bg-cream-100 text-charcoal-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-cream-200 transition-colors"
+            >
+              <LogIn size={15} />
+              Sign in
+            </Link>
+          )}
+
           <button
             aria-label="Toggle dark mode"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -126,18 +180,37 @@ export default function Navbar() {
                 {label}
               </Link>
             ))}
+            {user && (
+              <>
+                <Link href="/clients" className="block py-3 text-base font-medium border-b border-cream-100 text-charcoal-400 hover:text-charcoal-600">
+                  Clients
+                </Link>
+                <Link href="/dashboard" className="block py-3 text-base font-medium border-b border-cream-100 text-charcoal-400 hover:text-charcoal-600">
+                  Dashboard
+                </Link>
+              </>
+            )}
             <Link
               href="/configure"
               className="block mt-4 text-center bg-charcoal-600 text-white text-sm font-medium px-5 py-3 rounded-lg hover:bg-charcoal-500 transition-colors"
             >
               Start Designing
             </Link>
-            <Link
-              href="/alveo-pitch/"
-              className="block mt-2 text-center bg-cream-100 text-charcoal-600 text-sm font-medium px-5 py-3 rounded-lg hover:bg-cream-200 transition-colors"
-            >
-              Pitch Deck
-            </Link>
+            {user ? (
+              <button
+                onClick={() => { logout(); setMobileOpen(false); }}
+                className="block w-full mt-2 text-center bg-cream-100 text-charcoal-600 text-sm font-medium px-5 py-3 rounded-lg hover:bg-cream-200 transition-colors"
+              >
+                Sign out
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className="block mt-2 text-center bg-cream-100 text-charcoal-600 text-sm font-medium px-5 py-3 rounded-lg hover:bg-cream-200 transition-colors"
+              >
+                Sign in
+              </Link>
+            )}
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="w-full mt-2 text-center bg-cream-100 dark:bg-charcoal-400 dark:text-cream-100 text-charcoal-600 text-sm font-medium px-5 py-3 rounded-lg transition-colors"

@@ -53,3 +53,5 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   (req as AuthenticatedRequest).userEmail = email;
   next();
 }
+
+export { requireAuth as requireAuthJwt };

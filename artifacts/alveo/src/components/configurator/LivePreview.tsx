@@ -40,6 +40,8 @@ import {
   MessageCircle,
   ShoppingBag,
   MonitorPlay,
+  Send,
+  Copy,
 } from "lucide-react";
 import { StyleCustomizer } from "./StyleCustomizer";
 import { CostEstimatorTab } from "./CostEstimatorTab";
@@ -167,6 +169,10 @@ export function LivePreview({
   const [auditTrailByDesign, setAuditTrailByDesign] = useState<
     Record<string, DesignCommentAuditEntry[]>
   >({});
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [approvalClientEmail, setApprovalClientEmail] = useState("");
+  const [approvalSending, setApprovalSending] = useState(false);
+  const [approvalPortalUrl, setApprovalPortalUrl] = useState<string | null>(null);
   const previewTrackedRef = useRef(false);
   const exportMenuRef = useRef<HTMLDivElement>(null);
 
@@ -379,6 +385,42 @@ export function LivePreview({
     url.searchParams.set("readonly", "1");
     await navigator.clipboard.writeText(url.toString());
     trackEvent("client_link_copied");
+  };
+
+  const handleDuplicateDesign = () => {
+    onSaveDesign();
+    setSaveToast(true);
+    setTimeout(() => setSaveToast(false), 2500);
+    trackEvent("design_duplicated");
+  };
+
+  const handleSendForApproval = async () => {
+    if (!layout) return;
+    setApprovalSending(true);
+    try {
+      const currentDesign = savedDesigns[savedDesigns.length - 1];
+      const designId = currentDesign?.id ?? `unsaved_${Date.now()}`;
+      const designName = currentDesign?.name ?? "Untitled Design";
+      const res = await fetch(`${BASE}/api/approvals/send`, {
+        method: "POST",
+        headers: makeHeaders(),
+        body: JSON.stringify({
+          designId,
+          designName,
+          clientEmail: approvalClientEmail || null,
+          designSnapshot: config,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to create approval request");
+      const data = await res.json() as { approval: { id: string; token: string } };
+      const portalUrl = `${window.location.origin}${BASE}/portal/${data.approval.token}`;
+      setApprovalPortalUrl(portalUrl);
+      trackEvent("approval_sent");
+    } catch {
+      alert("Could not create approval request. Please try again.");
+    } finally {
+      setApprovalSending(false);
+    }
   };
 
   const handleExportAll = async () => {
@@ -652,6 +694,28 @@ export function LivePreview({
             >
               <Mail className="w-4 h-4" />
               <span>Email</span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleDuplicateDesign}
+              title="Duplicate current design as new save"
+              className="inline-flex items-center whitespace-nowrap space-x-1.5 bg-cream-100 hover:bg-cream-200 text-charcoal-600 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border border-cream-300"
+            >
+              <Copy className="w-4 h-4" />
+              <span>Duplicate</span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => { setApprovalPortalUrl(null); setApprovalClientEmail(""); setShowApprovalModal(true); }}
+              title="Send design for client approval"
+              className="inline-flex items-center whitespace-nowrap space-x-1.5 bg-taupe-100 hover:bg-taupe-200 text-taupe-700 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border border-taupe-300"
+            >
+              <Send className="w-4 h-4" />
+              <span>For Approval</span>
             </motion.button>
 
             {savedDesigns.length >= 2 && (
@@ -1407,6 +1471,100 @@ export function LivePreview({
         onClose={() => setShowCompareModal(false)}
         designs={savedDesigns}
       />
+
+      {/* ── Send for Approval Modal ── */}
+      <AnimatePresence>
+        {showApprovalModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          >
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => { if (!approvalSending) setShowApprovalModal(false); }}
+            />
+            <motion.div
+              initial={{ scale: 0.97, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.97, opacity: 0 }}
+              className="relative bg-white rounded-2xl border border-cream-200 shadow-xl w-full max-w-md p-6 z-10"
+            >
+              {approvalPortalUrl ? (
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+                    <Send className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <h3 className="font-serif text-xl text-charcoal-600 mb-2">Approval link ready</h3>
+                  <p className="text-sm text-charcoal-400 mb-4">Share this link with your client — they can review and approve or request changes.</p>
+                  <div className="flex items-center gap-2 bg-cream-50 border border-cream-200 rounded-lg px-3 py-2.5 mb-4">
+                    <span className="text-xs text-charcoal-500 truncate flex-1 font-mono">{approvalPortalUrl}</span>
+                    <button
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(approvalPortalUrl);
+                      }}
+                      className="shrink-0 text-xs text-taupe-600 hover:text-taupe-700 font-medium border-l border-cream-300 pl-2"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setShowApprovalModal(false)}
+                    className="w-full px-4 py-2.5 bg-charcoal-600 text-white rounded-lg text-sm font-medium hover:bg-charcoal-500 transition-colors"
+                  >
+                    Done
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className="font-serif text-xl text-charcoal-600">Send for approval</h3>
+                    <button onClick={() => setShowApprovalModal(false)} className="text-charcoal-400 hover:text-charcoal-600">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <p className="text-sm text-charcoal-400 mb-5">
+                    Generate a shareable link for your client to review the current design and leave feedback.
+                  </p>
+                  <div className="mb-5">
+                    <label className="block text-sm font-medium text-charcoal-600 mb-1.5">
+                      Client email <span className="text-charcoal-400 font-normal">(optional, for your records)</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={approvalClientEmail}
+                      onChange={(e) => setApprovalClientEmail(e.target.value)}
+                      placeholder="client@example.com"
+                      className="w-full px-4 py-3 border border-cream-300 rounded-lg text-charcoal-600 placeholder-charcoal-300 focus:outline-none focus:ring-2 focus:ring-taupe-300"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowApprovalModal(false)}
+                      className="flex-1 px-4 py-2.5 border border-cream-300 rounded-lg text-charcoal-500 hover:bg-cream-50 text-sm"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSendForApproval}
+                      disabled={approvalSending || !layout}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-charcoal-600 text-white rounded-lg text-sm font-medium hover:bg-charcoal-500 disabled:opacity-50 transition-colors"
+                    >
+                      {approvalSending ? (
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                      {approvalSending ? "Creating…" : "Generate link"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {onConfigChange && (
         <LayoutOptimizerModal

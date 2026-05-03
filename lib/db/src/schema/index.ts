@@ -5,4 +5,6 @@ export * from "./alveoDesignPermissions";
 export * from "./alveoMentionReads";
 export * from "./alveoDesignAudit";
 export * from "./alveoClients";
+export * from "./alveoProjects";
+export * from "./alveoDesignApprovals";
 export * from "./auth";
