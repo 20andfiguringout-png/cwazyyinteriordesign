@@ -17,6 +17,7 @@ export default function LoginPage() {
     setError("");
     try {
       await login(email, password);
+      sessionStorage.setItem("alveo-welcome", email);
       navigate("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");

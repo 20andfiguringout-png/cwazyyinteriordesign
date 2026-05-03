@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Maximize2, X, Heart, BookMarked, ChevronRight, Trash2, ArrowUpDown } from "lucide-react";
+import { ArrowRight, Maximize2, X, Heart, BookMarked, ChevronRight, Trash2, ArrowUpDown, Search } from "lucide-react";
 
 type StyleTag  = "All" | "Minimal" | "Glam" | "Small Space" | "Luxury" | "Modern" | "Rustic";
 type SizeTag   = "Any Size" | "Compact (≤ 60 sq ft)" | "Standard (60–120 sq ft)" | "Large (120+ sq ft)";
@@ -301,6 +301,7 @@ export default function GalleryPage() {
     try { return JSON.parse(localStorage.getItem(MOODBOARD_KEY)||"[]") as number[]; } catch { return []; }
   });
   const [showMoodboard, setShowMoodboard] = useState(false);
+  const [gallerySearch, setGallerySearch] = useState("");
 
   const toggleHeart = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -354,6 +355,10 @@ export default function GalleryPage() {
     if (activeTag  !== "All"      && it.style  !== activeTag) return false;
     if (activeSize !== "Any Size" && it.size   !== SIZE_MAP[activeSize as Exclude<SizeTag,"Any Size">]) return false;
     if (finishMatch !== null      && it.finish !== finishMatch) return false;
+    if (gallerySearch.trim()) {
+      const q = gallerySearch.toLowerCase();
+      if (!it.title.toLowerCase().includes(q) && !it.description.toLowerCase().includes(q)) return false;
+    }
     return true;
   });
   const sorted = (() => {
@@ -443,14 +448,33 @@ export default function GalleryPage() {
 
         {/* Style filter */}
         <div className="sticky top-16 z-10 bg-cream-50/95 backdrop-blur-sm pb-3 pt-2 -mx-6 px-6 border-b border-cream-200">
+          {/* Keyword search */}
+          <div className="relative mb-2.5">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none"/>
+            <input
+              value={gallerySearch} onChange={e => setGallerySearch(e.target.value)}
+              placeholder="Search by name or description…"
+              className="w-full pl-8 pr-8 py-2 text-sm bg-white border border-cream-200 rounded-xl text-charcoal-600 placeholder-stone-300 focus:outline-none focus:ring-1 focus:ring-taupe-300 focus:border-taupe-300"
+            />
+            {gallerySearch && (
+              <button onClick={() => setGallerySearch("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-stone-300 hover:text-stone-500">
+                <X size={12}/>
+              </button>
+            )}
+          </div>
           <div className="flex flex-wrap gap-2 mb-2 items-center">
             {tags.map((t) => (
               <button key={t} onClick={() => setActiveTag(t)}
                 className={`${filterPillBase} ${activeTag===t ? filterPillActive : filterPillInactive}`}>{t}</button>
             ))}
-            <span className="ml-auto text-[10px] font-medium text-stone-400 tabular-nums">
+            <motion.span
+              key={sorted.length}
+              initial={{ scale: 1.2, color: "#8b7355" }} animate={{ scale: 1, color: "#a8a29e" }}
+              transition={{ duration: 0.3 }}
+              className="ml-auto text-[10px] font-medium tabular-nums">
               {sorted.length !== items.length ? `${sorted.length} of ${items.length}` : `${items.length}`} designs
-            </span>
+            </motion.span>
           </div>
           <div className="flex flex-wrap gap-2 items-center">
             {sizes.map((s) => (

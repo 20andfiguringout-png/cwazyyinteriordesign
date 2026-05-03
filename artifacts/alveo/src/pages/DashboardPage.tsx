@@ -13,6 +13,29 @@ import { useToast } from "@/lib/toast";
 
 const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 
+function tagColor(tag: string): string {
+  const palettes = [
+    "bg-violet-50 text-violet-700 border-violet-200",
+    "bg-sky-50 text-sky-700 border-sky-200",
+    "bg-emerald-50 text-emerald-700 border-emerald-200",
+    "bg-amber-50 text-amber-700 border-amber-200",
+    "bg-rose-50 text-rose-700 border-rose-200",
+    "bg-cyan-50 text-cyan-700 border-cyan-200",
+    "bg-orange-50 text-orange-700 border-orange-200",
+    "bg-teal-50 text-teal-700 border-teal-200",
+  ];
+  let h = 0;
+  for (let i = 0; i < tag.length; i++) h = tag.charCodeAt(i) + ((h << 5) - h);
+  return palettes[Math.abs(h) % palettes.length];
+}
+
+function formatReminded(ts: number): string {
+  const mins = Math.floor((Date.now() - ts) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  return `${Math.floor(mins / 60)}h ago`;
+}
+
 interface Project {
   id: string; name: string; client_name: string | null; status: string;
   notes: string | null; design_count: number; created_at: string; updated_at: string;
@@ -395,12 +418,19 @@ export default function DashboardPage() {
   const [showAllDesigns,   setShowAllDesigns]   = useState(false);
   const [showAllApprovals, setShowAllApprovals] = useState(false);
 
-  // Reminder feedback
-  const [sentReminder, setSentReminder] = useState<string|null>(null);
+  // Reminder timestamps (approvalId → Date.now() when sent)
+  const [remindedAt, setRemindedAt] = useState<Record<string, number>>({});
+  // Copy-name feedback
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
     loadAll();
+    const welcomeEmail = sessionStorage.getItem("alveo-welcome");
+    if (welcomeEmail) {
+      sessionStorage.removeItem("alveo-welcome");
+      setTimeout(() => showToast("Welcome back! Great to see you.", "success"), 300);
+    }
   }, [user]);
 
   async function loadAll() {
@@ -446,11 +476,17 @@ export default function DashboardPage() {
   }
 
   const sendReminder = async (approvalId: string) => {
-    setSentReminder(approvalId);
+    setRemindedAt(prev => ({ ...prev, [approvalId]: Date.now() }));
     try {
       await fetch(`${BASE}/api/approvals/${approvalId}/remind`, { method: "PATCH", headers: authHeaders() });
     } catch { /* best-effort */ }
-    setTimeout(() => setSentReminder(null), 3000);
+  };
+
+  const copyDesignName = (id: string, name: string) => {
+    navigator.clipboard.writeText(name).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
   };
 
   async function duplicateVersion(design: SavedDesign, versionIdx: number) {
@@ -699,7 +735,9 @@ export default function DashboardPage() {
                   {allTags.map((t) => (
                     <button key={t} onClick={() => setActiveTag(t)}
                       className={`flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-full border transition-all
-                        ${activeTag===t ? "bg-charcoal-600 text-white border-charcoal-600" : "bg-white text-charcoal-500 border-cream-300 hover:border-charcoal-400"}`}>
+                        ${activeTag===t
+                          ? (t==="All" ? "bg-charcoal-600 text-white border-charcoal-600" : `${tagColor(t)} font-semibold`)
+                          : "bg-white text-charcoal-500 border-cream-300 hover:border-charcoal-400"}`}>
                       {t !== "All" && <Tag size={8}/>}{t}
                     </button>
                   ))}
@@ -734,6 +772,10 @@ export default function DashboardPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <p className="font-medium text-charcoal-600 truncate">{d.name}</p>
+                            {(() => {
+                              const sw = FINISH_SWATCHES[(d.config?.finish as string) ?? ""];
+                              return sw ? <span className="flex-shrink-0 w-3 h-3 rounded-full border border-stone-200 shadow-sm" style={{ background: sw.bg }} title={sw.label}/> : null;
+                            })()}
                             {versionCount > 0 && (
                               <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-stone-100 border border-stone-200 text-stone-400 flex-shrink-0">
                                 {versionCount + 1} ver
@@ -751,13 +793,17 @@ export default function DashboardPage() {
                           {tags && tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1.5">
                               {tags.map((t) => (
-                                <span key={t} className="text-[9px] px-1.5 py-0.5 rounded-full bg-taupe-50 border border-taupe-100 text-taupe-600">{t}</span>
+                                <span key={t} className={`text-[9px] px-1.5 py-0.5 rounded-full border ${tagColor(t)}`}>{t}</span>
                               ))}
                             </div>
                           )}
                         </div>
                         <div className="flex flex-col gap-1 shrink-0">
                           <div className="flex items-center gap-1">
+                            <button onClick={() => copyDesignName(d.id, d.name)} title="Copy name"
+                              className={`p-1.5 rounded-lg border transition-colors ${copiedId===d.id ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-cream-50 border-cream-200 text-charcoal-400 hover:text-taupe-600 hover:bg-taupe-50 hover:border-taupe-200"}`}>
+                              {copiedId===d.id ? <Check size={13}/> : <Copy size={13}/>}
+                            </button>
                             <button onClick={() => setHistoryDesign(d)} title="Version history"
                               className="p-1.5 rounded-lg bg-cream-50 border border-cream-200 text-charcoal-400 hover:text-taupe-600 hover:bg-taupe-50 hover:border-taupe-200 transition-colors">
                               <History size={13}/>
@@ -816,7 +862,7 @@ export default function DashboardPage() {
                   {(showAllApprovals ? approvals : approvals.slice(0, 5)).map((a) => {
                     const days = daysSince(a.created_at);
                     const isPending = a.status === "pending";
-                    const reminderSent = sentReminder === a.id;
+                    const reminderTs = remindedAt[a.id] ?? null;
                     return (
                       <div key={a.id} className="bg-white rounded-xl border border-cream-200 p-3.5">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -841,11 +887,16 @@ export default function DashboardPage() {
                           )}
                         </div>
                         {isPending && (
-                          <button onClick={() => sendReminder(a.id)}
-                            className={`mt-2 w-full flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 rounded-lg border transition-all
-                              ${reminderSent ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-stone-50 border-stone-200 text-stone-500 hover:border-taupe-300 hover:text-taupe-600 hover:bg-taupe-50"}`}>
-                            {reminderSent ? <><Check size={11}/> Reminder noted</> : <><Bell size={11}/> Send reminder</>}
-                          </button>
+                          reminderTs ? (
+                            <div className="mt-2 flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 rounded-lg border bg-emerald-50 border-emerald-200 text-emerald-600">
+                              <Check size={11}/> Reminded {formatReminded(reminderTs)}
+                            </div>
+                          ) : (
+                            <button onClick={() => sendReminder(a.id)}
+                              className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 rounded-lg border bg-stone-50 border-stone-200 text-stone-500 hover:border-taupe-300 hover:text-taupe-600 hover:bg-taupe-50 transition-all">
+                              <Bell size={11}/> Send reminder
+                            </button>
+                          )
                         )}
                         {a.status === "rejected" && (
                           <div className="mt-2 space-y-1.5">

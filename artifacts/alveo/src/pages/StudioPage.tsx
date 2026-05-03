@@ -4,7 +4,7 @@ import { useToast } from "@/lib/toast";
 import {
   ArrowLeft, ArrowRight, Check, Plus, GripVertical, Trash2, Bookmark, BookmarkCheck,
   ExternalLink, AlertCircle, FolderOpen, Clock, X, Loader2, Pencil, Copy,
-  RotateCcw, RotateCw, Palette,
+  RotateCcw, RotateCw, Palette, HelpCircle,
 } from "lucide-react";
 import { BUILTIN_CATALOGUE, getCat, type CatalogueEntry } from "@/types/catalogue";
 import { getStoredToken } from "@/lib/AuthContext";
@@ -809,6 +809,11 @@ function LoadModal({ onLoad, onClose }: LoadModalProps) {
             <p className="font-semibold text-charcoal-600 text-sm">Load a Saved Design</p>
             <p className="text-xs text-stone-400 mt-0.5">Pick any design to continue editing it</p>
           </div>
+          {!loading && designs.length > 0 && (
+            <span className="flex-shrink-0 text-[10px] font-semibold tabular-nums px-2 py-0.5 rounded-full bg-taupe-50 border border-taupe-200 text-taupe-600">
+              {designs.length}
+            </span>
+          )}
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-400 transition-colors"><X size={14}/></button>
         </div>
         <div className="px-4 pt-3 pb-2">
@@ -1045,6 +1050,7 @@ export default function StudioPage() {
   const [modules, setModules] = useState<StudioModule[]>([]);
   const [finish, setFinish] = useState("medium");
   const [showLoad, setShowLoad] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const catalogue = BUILTIN_CATALOGUE;
 
   // Undo / Redo
@@ -1212,11 +1218,22 @@ export default function StudioPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {step===3 && (
+            <button onClick={() => setShowShortcuts(v => !v)} title="Keyboard shortcuts"
+              className={`p-1.5 rounded-lg border transition-colors ${showShortcuts ? "bg-taupe-100 border-taupe-300 text-taupe-700" : "bg-stone-50 border-stone-200 text-stone-400 hover:text-stone-600 hover:bg-stone-100"}`}>
+              <HelpCircle size={14}/>
+            </button>
+          )}
           {step===3 && modules.length>0 && (
             <div className="flex flex-col items-end gap-0.5">
-              <span className={`text-[10px] font-mono tabular-nums ${totalUsed>wallW?"text-red-500":"text-stone-400"}`}>
-                {totalUsed}″ / {wallW}″
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[10px] font-mono tabular-nums ${totalUsed>wallW?"text-red-500":"text-stone-400"}`}>
+                  {totalUsed}″ / {wallW}″
+                </span>
+                <span className={`text-[10px] font-bold tabular-nums ${totalUsed>wallW?"text-red-500":totalUsed/wallW>0.9?"text-amber-500":"text-taupe-500"}`}>
+                  {Math.round((totalUsed/wallW)*100)}%
+                </span>
+              </div>
               <div className="w-20 h-1.5 bg-stone-100 rounded-full overflow-hidden">
                 <div className="h-full rounded-full transition-all duration-200"
                   style={{
@@ -1242,6 +1259,41 @@ export default function StudioPage() {
       </div>
 
       {showLoad && <LoadModal onLoad={handleLoadDesign} onClose={() => setShowLoad(false)}/>}
+
+      {showShortcuts && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/30 backdrop-blur-sm"
+          onClick={() => setShowShortcuts(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl border border-stone-100 w-full max-w-xs overflow-hidden"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
+              <div className="flex items-center gap-2">
+                <HelpCircle size={15} className="text-taupe-500"/>
+                <span className="font-semibold text-charcoal-600 text-sm">Keyboard shortcuts</span>
+              </div>
+              <button onClick={() => setShowShortcuts(false)} className="p-1 rounded text-stone-400 hover:text-stone-600">
+                <X size={13}/>
+              </button>
+            </div>
+            <div className="px-4 py-3 space-y-2">
+              {[
+                ["Undo",        "⌘ Z"],
+                ["Redo",        "⌘ Y  /  ⌘⇧Z"],
+                ["Save",        "⌘ S"],
+                ["Delete module","⌫  (select first)"],
+                ["Close modal", "Esc"],
+              ].map(([label, keys]) => (
+                <div key={label} className="flex items-center justify-between gap-4">
+                  <span className="text-xs text-charcoal-500">{label}</span>
+                  <kbd className="text-[10px] font-mono px-2 py-0.5 rounded-md border border-stone-200 bg-stone-50 text-stone-500 whitespace-nowrap">{keys}</kbd>
+                </div>
+              ))}
+            </div>
+            <div className="px-4 pb-3">
+              <p className="text-[10px] text-stone-300 text-center">Click anywhere outside to close</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
