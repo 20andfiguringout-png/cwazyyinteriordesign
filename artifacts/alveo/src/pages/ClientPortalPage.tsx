@@ -24,7 +24,7 @@ interface Approval {
 function renderPreview(snapshot: Partial<ClosetConfiguration> | null): string | null {
   if (!snapshot?.dimensions || !snapshot?.wardrobe || !snapshot?.shoes || !snapshot?.userInfo) return null;
   try {
-    const layout = ClosetLayoutEngine.calculate({
+    const engine = new ClosetLayoutEngine({
       closetType: snapshot.closetType,
       dimensions: snapshot.dimensions,
       roomDimensions: snapshot.roomDimensions,
@@ -34,7 +34,12 @@ function renderPreview(snapshot: Partial<ClosetConfiguration> | null): string | 
       zoneOverrides: snapshot.zoneOverrides,
       amenities: snapshot.amenities,
     });
-    const renderer = new ClosetSVGRenderer(layout, {
+    const layout = engine.calculateLayout();
+    const wall = layout.walls?.[0];
+    const wallLayout = wall
+      ? { ...layout, dimensions: { width: wall.width, height: wall.height, depth: wall.unitDepth }, zones: wall.zones, walls: [wall] }
+      : layout;
+    const renderer = new ClosetSVGRenderer(wallLayout, {
       showDimensions: true,
       showLabels: true,
       style: snapshot.userInfo.stylePreference ?? "modern",
