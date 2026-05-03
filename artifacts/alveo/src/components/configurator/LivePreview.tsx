@@ -613,6 +613,7 @@ export function LivePreview({
                   await copyShareLinkToClipboard(config);
                   setShareCopied(true);
                   setTimeout(() => setShareCopied(false), 2000);
+                  trackEvent("share_link_copied");
                 } catch {
                   /* ignore clipboard failures */
                 }
