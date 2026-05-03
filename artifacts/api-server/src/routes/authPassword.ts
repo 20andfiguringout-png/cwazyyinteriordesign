@@ -4,6 +4,7 @@ import type { Request, Response } from "express";
 import { Pool } from "pg";
 import bcrypt from "bcryptjs";
 import { issueToken, verifyToken } from "../middlewares/auth.js";
+import { writeAuditLog } from "../lib/auditLog.js";
 
 const router = Router();
 const pool = new Pool({ connectionString: process.env["DATABASE_URL"] });
@@ -81,6 +82,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
     );
     const user  = result.rows[0];
     const token = issueToken(emailLower);
+    writeAuditLog({ actorEmail: emailLower, action: "auth.register", resourceType: "user", resourceId: emailLower, ip });
     res.status(201).json({
       token,
       user: { email: user.email, firstName: user.first_name, lastName: user.last_name },
@@ -123,6 +125,7 @@ router.post("/auth/login", async (req: Request, res: Response) => {
     if (!user || !user.password_hash) {
       // Always run bcrypt to prevent timing-based email enumeration
       await bcrypt.compare(password, DUMMY_HASH);
+      writeAuditLog({ actorEmail: emailLower, action: "auth.login.failure", resourceType: "user", resourceId: emailLower, ip, meta: { reason: !user ? "unknown_email" : "no_password_hash" } });
       if (!user) {
         res.status(401).json({ error: "Invalid email or password" });
       } else {
@@ -133,11 +136,13 @@ router.post("/auth/login", async (req: Request, res: Response) => {
 
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
+      writeAuditLog({ actorEmail: emailLower, action: "auth.login.failure", resourceType: "user", resourceId: emailLower, ip, meta: { reason: "wrong_password" } });
       res.status(401).json({ error: "Invalid email or password" });
       return;
     }
 
     const token = issueToken(emailLower);
+    writeAuditLog({ actorEmail: emailLower, action: "auth.login.success", resourceType: "user", resourceId: emailLower, ip });
     res.json({
       token,
       user: {

@@ -4,6 +4,7 @@ import type { Request, Response } from "express";
 import { Pool } from "pg";
 import crypto from "crypto";
 import { requireAuthJwt } from "../middlewares/auth.js";
+import { writeAuditLog } from "../lib/auditLog.js";
 
 const router = Router();
 const pool = new Pool({ connectionString: process.env["DATABASE_URL"] });
@@ -53,6 +54,8 @@ router.post("/approvals/send", requireAuthJwt, async (req: Request, res: Respons
        RETURNING id, token`,
       [designId, email, designName ?? null, clientEmail ?? null, token, designSnapshot ? JSON.stringify(designSnapshot) : null],
     );
+    const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
+    writeAuditLog({ actorEmail: email, action: "approval.send", resourceType: "approval", resourceId: result.rows[0]?.id, ip, meta: { designId, clientEmail: clientEmail ?? null } });
     res.status(201).json({ approval: result.rows[0] });
   } catch {
     res.status(500).json({ error: "Failed to create approval request" });
@@ -97,6 +100,8 @@ router.post("/approvals/portal/:token/respond", async (req: Request, res: Respon
       res.status(404).json({ error: "Approval not found or already responded" });
       return;
     }
+    const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
+    writeAuditLog({ action: "approval.respond", resourceType: "approval", resourceId: result.rows[0]?.id, ip, meta: { status } });
     res.json({ ok: true, status });
   } catch {
     res.status(500).json({ error: "Failed to submit response" });

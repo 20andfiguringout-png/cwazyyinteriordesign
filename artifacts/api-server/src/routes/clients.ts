@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Request, Response } from "express";
 import { Pool } from "pg";
 import { requireAuth } from "../middlewares/authMiddleware";
+import { writeAuditLog } from "../lib/auditLog.js";
 
 const router = Router();
 const pool = new Pool({ connectionString: process.env["DATABASE_URL"] });
@@ -81,6 +82,8 @@ router.post("/clients", requireAuth, async (req: Request, res: Response) => {
        client.notes ?? null, client.budget ?? null],
     );
     const result = await pool.query(`SELECT * FROM alveo_clients WHERE owner_email = $1 ORDER BY created_at DESC`, [user]);
+    const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
+    writeAuditLog({ actorEmail: user, action: client.id ? "client.update" : "client.create", resourceType: "client", resourceId: id, ip, meta: { name: client.name } });
     res.json({ clients: result.rows });
   } catch {
     res.status(500).json({ error: "Database error" });
@@ -100,6 +103,8 @@ router.delete("/clients", requireAuth, async (req: Request, res: Response) => {
   try {
     await ensureTable();
     await pool.query(`DELETE FROM alveo_clients WHERE owner_email = $1 AND id = $2`, [user, parsed.data.id]);
+    const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
+    writeAuditLog({ actorEmail: user, action: "client.delete", resourceType: "client", resourceId: parsed.data.id, ip });
     const result = await pool.query(`SELECT * FROM alveo_clients WHERE owner_email = $1 ORDER BY created_at DESC`, [user]);
     res.json({ clients: result.rows });
   } catch {

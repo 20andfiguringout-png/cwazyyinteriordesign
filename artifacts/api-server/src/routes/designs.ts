@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Request, Response } from "express";
 import { Pool } from "pg";
 import { requireAuth } from "../middlewares/authMiddleware";
+import { writeAuditLog } from "../lib/auditLog.js";
 
 const router = Router();
 const pool = new Pool({ connectionString: process.env["DATABASE_URL"] });
@@ -92,6 +93,7 @@ router.post("/designs", requireAuth, async (req: Request, res: Response) => {
       [user],
     );
     const designs = result.rows.map((r) => ({ ...(r.config as Record<string, unknown>), id: r.id, name: r.name, savedAt: r.saved_at }));
+    writeAuditLog({ actorEmail: user, action: "design.upsert", resourceType: "design", resourceId: id, ip, meta: { name: designName } });
     res.setHeader("X-RateLimit-Remaining", String(limit.remaining));
     res.json({ designs });
   } catch {
@@ -116,6 +118,7 @@ router.delete("/designs", requireAuth, async (req: Request, res: Response) => {
   }
   try {
     await pool.query(`DELETE FROM alveo_designs WHERE user_email = $1 AND id = $2`, [user, parsed.data.id]);
+    writeAuditLog({ actorEmail: user, action: "design.delete", resourceType: "design", resourceId: parsed.data.id, ip });
     const result = await pool.query<{ id: string; name: string; config: unknown; saved_at: string }>(
       `SELECT id, name, config, saved_at FROM alveo_designs WHERE user_email = $1 ORDER BY saved_at DESC LIMIT 100`,
       [user],

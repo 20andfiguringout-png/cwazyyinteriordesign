@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Request, Response } from "express";
 import { Pool } from "pg";
 import { requireAuthJwt } from "../middlewares/auth.js";
+import { writeAuditLog } from "../lib/auditLog.js";
 
 const router = Router();
 const pool = new Pool({ connectionString: process.env["DATABASE_URL"] });
@@ -69,6 +70,8 @@ router.post("/projects", requireAuthJwt, async (req: Request, res: Response) => 
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
       [email, name, clientName ?? null, status, notes ?? null],
     );
+    const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
+    writeAuditLog({ actorEmail: email, action: "project.create", resourceType: "project", resourceId: result.rows[0]?.id, ip, meta: { name } });
     res.status(201).json({ project: result.rows[0] });
   } catch {
     res.status(500).json({ error: "Failed to create project" });
@@ -96,6 +99,8 @@ router.put("/projects/:id", requireAuthJwt, async (req: Request, res: Response) 
       values,
     );
     if (result.rows.length === 0) { res.status(404).json({ error: "Not found" }); return; }
+    const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
+    writeAuditLog({ actorEmail: email, action: "project.update", resourceType: "project", resourceId: id, ip, meta: { fields: Object.keys(parsed.data) } });
     res.json({ project: result.rows[0] });
   } catch {
     res.status(500).json({ error: "Failed to update project" });
@@ -108,6 +113,8 @@ router.delete("/projects/:id", requireAuthJwt, async (req: Request, res: Respons
   try {
     await pool.query("UPDATE alveo_designs SET project_id = NULL WHERE project_id = $1 AND user_email = $2", [id, email]);
     await pool.query("DELETE FROM alveo_projects WHERE id = $1 AND owner_email = $2", [id, email]);
+    const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
+    writeAuditLog({ actorEmail: email, action: "project.delete", resourceType: "project", resourceId: id, ip });
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: "Failed to delete project" });
@@ -143,6 +150,8 @@ router.post("/projects/:id/designs", requireAuthJwt, async (req: Request, res: R
       return;
     }
 
+    const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
+    writeAuditLog({ actorEmail: email, action: "project.link_design", resourceType: "project", resourceId: projectId, ip, meta: { designId } });
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: "Failed to link design" });
