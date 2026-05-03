@@ -19,7 +19,7 @@ import {
   exportLayoutToPDF,
   exportMultipleDesignsToPDF,
 } from "@/engine/PDFExporter";
-import { exportQuoteToPDF } from "@/engine/QuotePDFExporter";
+import { exportQuoteToPDF, exportQuoteToBase64 } from "@/engine/QuotePDFExporter";
 import { renderFloorPlan } from "@/renderer/FloorPlanRenderer";
 import {
   Download,
@@ -174,6 +174,12 @@ export function LivePreview({
   const [approvalClientEmail, setApprovalClientEmail] = useState("");
   const [approvalSending, setApprovalSending] = useState(false);
   const [approvalPortalUrl, setApprovalPortalUrl] = useState<string | null>(null);
+
+  const [showSendQuoteModal, setShowSendQuoteModal] = useState(false);
+  const [sendQuoteEmail, setSendQuoteEmail] = useState("");
+  const [sendQuoteMessage, setSendQuoteMessage] = useState("");
+  const [sendQuoteSending, setSendQuoteSending] = useState(false);
+  const [sendQuoteResult, setSendQuoteResult] = useState<"sent" | "fallback" | "error" | null>(null);
   const previewTrackedRef = useRef(false);
   const exportMenuRef = useRef<HTMLDivElement>(null);
 
@@ -380,6 +386,70 @@ export function LivePreview({
       alert("Could not generate quote PDF. Please try again.");
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleSendQuote = async () => {
+    if (!layout || !sendQuoteEmail) return;
+    setSendQuoteSending(true);
+    setSendQuoteResult(null);
+    try {
+      const designName =
+        savedDesigns.length > 0
+          ? savedDesigns[savedDesigns.length - 1].name
+          : projectRef
+          ? `${projectRef} — Closet`
+          : "Closet Design";
+      const { base64, quoteNum, grandTotal } = await exportQuoteToBase64({
+        layout,
+        config,
+        designName,
+        clientName,
+        projectRef,
+        designerName: userEmail?.split("@")[0],
+        designerEmail: userEmail,
+        logoDataUrl,
+        accessories: config.accessories,
+        lighting: config.lighting,
+      });
+      const res = await fetch(`${BASE}/api/quotes/send`, {
+        method: "POST",
+        headers: { ...makeHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to:           sendQuoteEmail,
+          designName,
+          clientName:   clientName ?? null,
+          designerName: userEmail?.split("@")[0] ?? null,
+          quoteNumber:  quoteNum,
+          grandTotal,
+          message:      sendQuoteMessage.trim() || null,
+          pdfBase64:    base64,
+        }),
+      });
+      if (!res.ok) throw new Error("server error");
+      const data = await res.json() as { sent: boolean; fallback?: boolean };
+      if (data.fallback) {
+        const subject = encodeURIComponent(`Alvéo Design Quote — ${designName} (${quoteNum})`);
+        const body = encodeURIComponent(
+          `Hi${clientName ? ` ${clientName}` : ""},\n\nPlease find your design quotation for "${designName}" attached.\n\nQuote #: ${quoteNum}\nEstimated total: $${grandTotal.toLocaleString()}\n\nValid for 30 days.\n\nBest regards,\n${userEmail ?? "Your designer"}`,
+        );
+        window.open(`mailto:${sendQuoteEmail}?subject=${subject}&body=${body}`, "_blank");
+        const slug = (designName + (clientName ? `-${clientName}` : "")).toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60);
+        const pdfBytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        const blob = new Blob([pdfBytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = `alveo-quote-${slug}-${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click(); URL.revokeObjectURL(url);
+        setSendQuoteResult("fallback");
+      } else {
+        setSendQuoteResult("sent");
+        trackEvent("quote_sent", { designName });
+      }
+    } catch {
+      setSendQuoteResult("error");
+    } finally {
+      setSendQuoteSending(false);
     }
   };
 
@@ -748,6 +818,19 @@ export function LivePreview({
               <Send className="w-4 h-4" />
               <span>For Approval</span>
             </motion.button>
+
+            {layout && (
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => { setSendQuoteResult(null); setSendQuoteEmail(""); setSendQuoteMessage(""); setShowSendQuoteModal(true); }}
+                title="Email quote PDF to client"
+                className="inline-flex items-center whitespace-nowrap space-x-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border border-amber-200"
+              >
+                <Send className="w-4 h-4" />
+                <span>Send Quote</span>
+              </motion.button>
+            )}
 
             {savedDesigns.length >= 2 && (
               <motion.button
@@ -1604,6 +1687,134 @@ export function LivePreview({
                         <Send className="w-4 h-4" />
                       )}
                       {approvalSending ? "Creating…" : "Generate link"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Send Quote Modal ── */}
+      <AnimatePresence>
+        {showSendQuoteModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          >
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => { if (!sendQuoteSending) setShowSendQuoteModal(false); }}
+            />
+            <motion.div
+              initial={{ scale: 0.97, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.97, opacity: 0 }}
+              className="relative bg-white rounded-2xl border border-cream-200 shadow-xl w-full max-w-md p-6 z-10"
+            >
+              {sendQuoteResult === "sent" ? (
+                <div className="text-center py-2">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+                    <Send className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <h3 className="font-serif text-xl text-charcoal-600 mb-2">Quote sent!</h3>
+                  <p className="text-sm text-charcoal-400 mb-5">
+                    The PDF quote was emailed to <span className="font-medium text-charcoal-600">{sendQuoteEmail}</span>.
+                  </p>
+                  <button
+                    onClick={() => setShowSendQuoteModal(false)}
+                    className="w-full px-4 py-2.5 bg-charcoal-600 text-white rounded-lg text-sm font-medium hover:bg-charcoal-500 transition-colors"
+                  >
+                    Done
+                  </button>
+                </div>
+              ) : sendQuoteResult === "fallback" ? (
+                <div className="text-center py-2">
+                  <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                    <Send className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <h3 className="font-serif text-xl text-charcoal-600 mb-2">Almost there</h3>
+                  <p className="text-sm text-charcoal-400 mb-2">
+                    The PDF was downloaded to your device and your email client opened.
+                  </p>
+                  <p className="text-sm text-charcoal-400 mb-5">
+                    Attach the downloaded PDF to the draft and send it to your client.
+                  </p>
+                  <button
+                    onClick={() => setShowSendQuoteModal(false)}
+                    className="w-full px-4 py-2.5 bg-charcoal-600 text-white rounded-lg text-sm font-medium hover:bg-charcoal-500 transition-colors"
+                  >
+                    Done
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-5">
+                    <div>
+                      <h3 className="font-serif text-xl text-charcoal-600">Send quote to client</h3>
+                      <p className="text-xs text-charcoal-400 mt-0.5">Generates a PDF and emails it directly</p>
+                    </div>
+                    <button
+                      onClick={() => setShowSendQuoteModal(false)}
+                      className="text-charcoal-400 hover:text-charcoal-600"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-charcoal-600 mb-1.5">
+                      Client email <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={sendQuoteEmail}
+                      onChange={(e) => setSendQuoteEmail(e.target.value)}
+                      placeholder="client@example.com"
+                      className="w-full px-4 py-3 border border-cream-300 rounded-lg text-charcoal-600 placeholder-charcoal-300 focus:outline-none focus:ring-2 focus:ring-taupe-300"
+                    />
+                  </div>
+
+                  <div className="mb-5">
+                    <label className="block text-sm font-medium text-charcoal-600 mb-1.5">
+                      Personal message <span className="text-charcoal-400 font-normal">(optional)</span>
+                    </label>
+                    <textarea
+                      value={sendQuoteMessage}
+                      onChange={(e) => setSendQuoteMessage(e.target.value)}
+                      placeholder="Hi — please find your design quote attached…"
+                      rows={3}
+                      className="w-full px-4 py-3 border border-cream-300 rounded-lg text-charcoal-600 placeholder-charcoal-300 focus:outline-none focus:ring-2 focus:ring-taupe-300 resize-none text-sm"
+                    />
+                  </div>
+
+                  {sendQuoteResult === "error" && (
+                    <p className="text-sm text-red-500 mb-4 text-center">
+                      Something went wrong. Please try again.
+                    </p>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowSendQuoteModal(false)}
+                      className="flex-1 px-4 py-2.5 border border-cream-300 rounded-lg text-charcoal-500 hover:bg-cream-50 text-sm"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSendQuote}
+                      disabled={sendQuoteSending || !sendQuoteEmail || !layout}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-700 text-white rounded-lg text-sm font-medium hover:bg-amber-800 disabled:opacity-50 transition-colors"
+                    >
+                      {sendQuoteSending ? (
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                      {sendQuoteSending ? "Generating & sending…" : "Send quote"}
                     </button>
                   </div>
                 </>

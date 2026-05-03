@@ -8,6 +8,7 @@ import authRouter from "./auth";
 import authPasswordRouter from "./authPassword";
 import projectsRouter from "./projects";
 import approvalsRouter from "./approvals";
+import quotesRouter from "./quotes";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(designCommentsRouter);
 router.use(clientsRouter);
 router.use(projectsRouter);
 router.use(approvalsRouter);
+router.use(quotesRouter);
 
 export default router;

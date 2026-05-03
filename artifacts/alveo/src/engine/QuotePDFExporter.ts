@@ -29,21 +29,13 @@ const LIGHTING_COSTS: Record<string, { label: string; unit: number }> = {
   islandPendant: { label: "Island pendant fitting", unit: 320 },
 };
 
-type LineItem = {
-  category: string;
-  description: string;
-  qty: number;
-  unitCost: number;
-  total: number;
-};
+type LineItem = { category: string; description: string; qty: number; unitCost: number; total: number };
 
 const CATEGORY_ORDER = ["Materials", "Hardware", "Lighting", "Accessories", "Logistics", "Labour"];
 
 function computeLineItems(
-  layout: ClosetLayout,
-  userInfo: UserPreferences,
-  accessories?: AccessoryItem[],
-  lighting?: LightingOptions,
+  layout: ClosetLayout, userInfo: UserPreferences,
+  accessories?: AccessoryItem[], lighting?: LightingOptions,
 ): { items: LineItem[]; materialsSubtotal: number; labourCost: number; grandTotal: number } {
   const items: LineItem[] = [];
   const finish    = userInfo.woodFinish ?? "medium";
@@ -93,16 +85,12 @@ function computeLineItems(
   const materialsSubtotal = items.reduce((s, i) => s + i.total, 0);
   const labourCost = Math.round(materialsSubtotal * LABOUR_RATE);
   items.push({ category: "Labour", description: "Professional installation & fitting", qty: 1, unitCost: labourCost, total: labourCost });
-  const grandTotal = materialsSubtotal + labourCost;
-
-  return { items, materialsSubtotal, labourCost, grandTotal };
+  return { items, materialsSubtotal, labourCost, grandTotal: materialsSubtotal + labourCost };
 }
 
 // ─── Drawing helpers ──────────────────────────────────────────────────────────
 
-function usd(n: number) {
-  return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
-}
+function usd(n: number) { return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 }); }
 
 function inchesToFtIn(inches: number): string {
   const ft = Math.floor(inches / 12);
@@ -118,60 +106,35 @@ async function drawSvgToPdf(doc: jsPDF, svgMarkup: string, x: number, y: number,
   const srcW = vb?.width || Number(svgEl.getAttribute("width") ?? 800);
   const srcH = vb?.height || Number(svgEl.getAttribute("height") ?? 600);
   const scale = Math.min(maxW / srcW, maxH / srcH);
-  const w = srcW * scale;
-  const h = srcH * scale;
-  await svg2pdf(svgEl, doc, { x, y, width: w, height: h });
-  return h;
+  await svg2pdf(svgEl, doc, { x, y, width: srcW * scale, height: srcH * scale });
+  return srcH * scale;
 }
 
-function hRule(doc: jsPDF, y: number, margin: number, pageW: number, color: [number, number, number] = [210, 200, 190]) {
-  doc.setDrawColor(...color);
-  doc.setLineWidth(0.5);
-  doc.line(margin, y, pageW - margin, y);
+function hRule(doc: jsPDF, y: number, M: number, pageW: number, color: [number, number, number] = [210, 200, 190]) {
+  doc.setDrawColor(...color); doc.setLineWidth(0.5); doc.line(M, y, pageW - M, y);
 }
 
-function sectionHeader(doc: jsPDF, text: string, y: number, margin: number, pageW: number): number {
+function sectionHeader(doc: jsPDF, text: string, y: number, M: number, pageW: number): number {
   doc.setFillColor(245, 240, 235);
-  doc.roundedRect(margin, y, pageW - margin * 2, 18, 2, 2, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(100, 90, 80);
-  doc.text(text.toUpperCase(), margin + 8, y + 12);
+  doc.roundedRect(M, y, pageW - M * 2, 18, 2, 2, "F");
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(100, 90, 80);
+  doc.text(text.toUpperCase(), M + 8, y + 12);
   return y + 18;
 }
 
-function tableRow(
-  doc: jsPDF,
-  y: number,
-  margin: number,
-  pageW: number,
-  description: string,
-  qty: string,
-  unit: string,
-  total: string,
-  isOdd: boolean,
-): number {
+function tableRow(doc: jsPDF, y: number, M: number, pageW: number, description: string, qty: string, unit: string, total: string, isOdd: boolean): number {
   const ROW_H = 16;
-  if (isOdd) {
-    doc.setFillColor(251, 249, 247);
-    doc.rect(margin, y, pageW - margin * 2, ROW_H, "F");
-  }
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(50, 45, 40);
-  const col1 = margin + 8;
-  const col2 = margin + (pageW - margin * 2) * 0.58;
-  const col3 = margin + (pageW - margin * 2) * 0.73;
-  const col4 = pageW - margin - 8;
+  if (isOdd) { doc.setFillColor(251, 249, 247); doc.rect(M, y, pageW - M * 2, ROW_H, "F"); }
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(50, 45, 40);
+  const col1 = M + 8, col2 = M + (pageW - M * 2) * 0.58, col3 = M + (pageW - M * 2) * 0.73, col4 = pageW - M - 8;
   doc.text(description, col1, y + 11);
   doc.text(qty, col2, y + 11);
   doc.text(unit, col3, y + 11);
-  doc.setFont("helvetica", "bold");
-  doc.text(total, col4, y + 11, { align: "right" });
+  doc.setFont("helvetica", "bold"); doc.text(total, col4, y + 11, { align: "right" });
   return y + ROW_H;
 }
 
-// ─── Main export function ─────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface QuotePDFOptions {
   layout: ClosetLayout;
@@ -186,124 +149,70 @@ export interface QuotePDFOptions {
   lighting?: LightingOptions;
 }
 
-export async function exportQuoteToPDF({
-  layout,
-  config,
-  designName = "Closet Design",
-  clientName,
-  projectRef,
-  designerName,
-  designerEmail,
-  logoDataUrl,
-  accessories,
-  lighting,
-}: QuotePDFOptions): Promise<void> {
+export interface QuotePDFResult {
+  doc: jsPDF;
+  quoteNum: string;
+  grandTotal: number;
+  designName: string;
+}
+
+// ─── Core builder (shared by save + base64) ──────────────────────────────────
+
+async function buildQuotePDF({
+  layout, config,
+  designName: rawDesignName = "Closet Design",
+  clientName, projectRef, designerName, designerEmail, logoDataUrl,
+  accessories, lighting,
+}: QuotePDFOptions): Promise<QuotePDFResult> {
+  const designName = rawDesignName;
   const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const M = 36; // margin
+  const M = 36;
 
   const quoteNum = `QT-${Date.now().toString(36).toUpperCase().slice(-6)}`;
   const today = new Date();
   const validUntil = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
   const fmt = (d: Date) => d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
-  // ── PAGE 1 ──────────────────────────────────────────────────────────────────
-
-  // Header bar
-  doc.setFillColor(45, 40, 35);
-  doc.rect(0, 0, pageW, 70, "F");
-
-  // Branding
-  doc.setFont("times", "bold");
-  doc.setFontSize(26);
-  doc.setTextColor(245, 238, 225);
-  doc.text("ALVÉO", M, 44);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(180, 165, 148);
-  doc.text("DESIGN QUOTATION", M, 58);
-
-  // Quote number top-right
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(245, 238, 225);
-  doc.text(quoteNum, pageW - M, 38, { align: "right" });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(180, 165, 148);
+  // ── Page 1 ──────────────────────────────────────────────────────────────────
+  doc.setFillColor(45, 40, 35); doc.rect(0, 0, pageW, 70, "F");
+  doc.setFont("times", "bold"); doc.setFontSize(26); doc.setTextColor(245, 238, 225); doc.text("ALVÉO", M, 44);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(180, 165, 148); doc.text("DESIGN QUOTATION", M, 58);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(245, 238, 225); doc.text(quoteNum, pageW - M, 38, { align: "right" });
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(180, 165, 148);
   doc.text(`Issued: ${fmt(today)}`, pageW - M, 52, { align: "right" });
   doc.text(`Valid until: ${fmt(validUntil)}`, pageW - M, 63, { align: "right" });
 
-  // Logo if provided
   if (logoDataUrl) {
-    try {
-      const fmt2 = logoDataUrl.startsWith("data:image/jpeg") ? "JPEG" : "PNG";
-      doc.addImage(logoDataUrl, fmt2, pageW - M - 70, 6, 60, 22);
-    } catch { /* ignore */ }
+    try { doc.addImage(logoDataUrl, logoDataUrl.startsWith("data:image/jpeg") ? "JPEG" : "PNG", pageW - M - 70, 6, 60, 22); } catch { /* ignore */ }
   }
 
   let y = 90;
-
-  // Designer + Client columns
   const colW = (pageW - M * 2 - 20) / 2;
   const col2X = M + colW + 20;
 
-  // Designer block
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(130, 115, 100);
-  doc.text("FROM / DESIGNER", M, y);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(130, 115, 100); doc.text("FROM / DESIGNER", M, y);
   y += 6;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(40, 35, 30);
-  doc.text(designerName ?? "Your Studio", M, y + 10);
-  if (designerEmail) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(100, 90, 80);
-    doc.text(designerEmail, M, y + 22);
-  }
+  doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(40, 35, 30); doc.text(designerName ?? "Your Studio", M, y + 10);
+  if (designerEmail) { doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(100, 90, 80); doc.text(designerEmail, M, y + 22); }
 
-  // Client block
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(130, 115, 100);
-  doc.text("PREPARED FOR", col2X, y - 6);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(40, 35, 30);
-  doc.text(clientName ?? "Client", col2X, y + 10);
-  if (projectRef) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(100, 90, 80);
-    doc.text(`Project ref: ${projectRef}`, col2X, y + 22);
-  }
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(130, 115, 100); doc.text("PREPARED FOR", col2X, y - 6);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(40, 35, 30); doc.text(clientName ?? "Client", col2X, y + 10);
+  if (projectRef) { doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(100, 90, 80); doc.text(`Project ref: ${projectRef}`, col2X, y + 22); }
 
-  y += 40;
-  hRule(doc, y, M, pageW);
-  y += 16;
+  y += 40; hRule(doc, y, M, pageW); y += 16;
+  doc.setFont("times", "bold"); doc.setFontSize(17); doc.setTextColor(40, 35, 30); doc.text(designName, M, y); y += 18;
 
-  // Design title
-  doc.setFont("times", "bold");
-  doc.setFontSize(17);
-  doc.setTextColor(40, 35, 30);
-  doc.text(designName, M, y);
-  y += 18;
-
-  // ── Design spec box ──────────────────────────────────────────────────────────
   const dim = config.dimensions;
   const ui  = config.userInfo;
   const specItems: [string, string][] = [
-    ["Closet type",  (config.closetType ?? "reach-in").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())],
+    ["Closet type",  (config.closetType ?? "reach-in").replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())],
     ["Width",        dim ? inchesToFtIn(dim.width) : "—"],
     ["Height",       dim ? inchesToFtIn(dim.height) : "—"],
     ["Depth",        dim ? inchesToFtIn(dim.depth ?? 24) : "—"],
-    ["Style",        (ui?.stylePreference ?? "modern").replace(/\b\w/g, (c) => c.toUpperCase())],
-    ["Wood finish",  (ui?.woodFinish ?? "medium").replace(/\b\w/g, (c) => c.toUpperCase())],
+    ["Style",        (ui?.stylePreference ?? "modern").replace(/\b\w/g, c => c.toUpperCase())],
+    ["Wood finish",  (ui?.woodFinish ?? "medium").replace(/\b\w/g, c => c.toUpperCase())],
     ["Hardware",     ui?.hardwareFinish ?? "Chrome"],
     ["Utilisation",  `${layout.utilizationScore}%`],
     ["Hanging rods", `${layout.totalStorage.hangingRods} lin ft`],
@@ -311,77 +220,39 @@ export async function exportQuoteToPDF({
     ["Shoe capacity",`${layout.totalStorage.shoeCapacity} pairs`],
   ];
 
-  doc.setFillColor(250, 247, 242);
-  doc.setDrawColor(220, 210, 195);
-  doc.setLineWidth(0.5);
+  doc.setFillColor(250, 247, 242); doc.setDrawColor(220, 210, 195); doc.setLineWidth(0.5);
   doc.roundedRect(M, y, pageW - M * 2, 60, 4, 4, "FD");
-
   const specColW = (pageW - M * 2 - 16) / 4;
-  let sx = M + 8;
   let sy = y + 12;
   specItems.forEach(([label, value], idx) => {
-    if (idx > 0 && idx % 4 === 0) { sx = M + 8; sy += 22; }
-    const cx = sx + (idx % 4) * specColW;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(130, 115, 100);
-    doc.text(label, cx, sy);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(40, 35, 30);
-    doc.text(value, cx, sy + 10);
+    if (idx > 0 && idx % 4 === 0) sy += 22;
+    const cx = M + 8 + (idx % 4) * specColW;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(130, 115, 100); doc.text(label, cx, sy);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(40, 35, 30); doc.text(value, cx, sy + 10);
   });
   y += 68;
 
-  // ── Elevation drawing ────────────────────────────────────────────────────────
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(130, 115, 100);
-  doc.text("ELEVATION VIEW", M, y + 8);
-  y += 14;
-
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(130, 115, 100); doc.text("ELEVATION VIEW", M, y + 8); y += 14;
   const walls = layout.walls?.length
     ? layout.walls
-    : [{
-        wallId: "back", label: "BACK WALL", elevationRef: "EL-A",
-        width: layout.dimensions.width, height: layout.dimensions.height,
-        unitDepth: layout.dimensions.depth, zones: layout.zones,
-      } as ClosetWall];
-
+    : [{ wallId: "back", label: "BACK WALL", elevationRef: "EL-A", width: layout.dimensions.width, height: layout.dimensions.height, unitDepth: layout.dimensions.depth, zones: layout.zones } as ClosetWall];
   const firstWall = walls[0];
-  const wallLayout = {
-    ...layout,
-    dimensions: { width: firstWall.width, height: firstWall.height, depth: firstWall.unitDepth },
-    zones: firstWall.zones,
-    walls: [firstWall],
-  };
+  const wallLayout = { ...layout, dimensions: { width: firstWall.width, height: firstWall.height, depth: firstWall.unitDepth }, zones: firstWall.zones, walls: [firstWall] };
   const renderer = new ClosetSVGRenderer(wallLayout, {
-    showDimensions: true,
-    showLabels: true,
+    showDimensions: true, showLabels: true,
     style: (ui?.stylePreference ?? "modern") as UserPreferences["stylePreference"],
     woodFinish: (ui?.woodFinish ?? "medium") as UserPreferences["woodFinish"],
   });
-  const svgMarkup = renderer.renderElevation();
   const svgH = Math.min(pageH - y - 50, 240);
-  await drawSvgToPdf(doc, svgMarkup, M, y, pageW - M * 2, svgH);
+  await drawSvgToPdf(doc, renderer.renderElevation(), M, y, pageW - M * 2, svgH);
   y += svgH + 8;
 
-  // ── PAGE 2: Cost breakdown ────────────────────────────────────────────────────
-  doc.addPage("a4", "portrait");
-  y = M;
-
-  // Slim repeat header
-  doc.setFillColor(45, 40, 35);
-  doc.rect(0, 0, pageW, 28, "F");
-  doc.setFont("times", "bold");
-  doc.setFontSize(12);
-  doc.setTextColor(245, 238, 225);
-  doc.text("ALVÉO", M, 19);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(180, 165, 148);
+  // ── Page 2: Cost breakdown ────────────────────────────────────────────────────
+  doc.addPage("a4", "portrait"); y = M;
+  doc.setFillColor(45, 40, 35); doc.rect(0, 0, pageW, 28, "F");
+  doc.setFont("times", "bold"); doc.setFontSize(12); doc.setTextColor(245, 238, 225); doc.text("ALVÉO", M, 19);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(180, 165, 148);
   doc.text(`${quoteNum}  ·  ${designName}`, M + 44, 19);
-  doc.setTextColor(180, 165, 148);
   doc.text("COST BREAKDOWN", pageW - M, 19, { align: "right" });
   y = 44;
 
@@ -389,141 +260,91 @@ export async function exportQuoteToPDF({
   const grouped: Record<string, LineItem[]> = {};
   for (const item of items) (grouped[item.category] ??= []).push(item);
 
-  // Table column headers
   y = sectionHeader(doc, "Line Items", y, M, pageW);
   const hY = y;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(100, 90, 80);
-  const col1H = M + 8;
-  const col2H = M + (pageW - M * 2) * 0.58;
-  const col3H = M + (pageW - M * 2) * 0.73;
-  const col4H = pageW - M - 8;
-  doc.text("Description", col1H, hY + 12);
-  doc.text("Qty", col2H, hY + 12);
-  doc.text("Unit", col3H, hY + 12);
-  doc.text("Total", col4H, hY + 12, { align: "right" });
-  y = hY + 18;
-  hRule(doc, y, M, pageW, [200, 190, 178]);
-  y += 2;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(100, 90, 80);
+  const col1H = M + 8, col2H = M + (pageW - M * 2) * 0.58, col3H = M + (pageW - M * 2) * 0.73, col4H = pageW - M - 8;
+  doc.text("Description", col1H, hY + 12); doc.text("Qty", col2H, hY + 12); doc.text("Unit", col3H, hY + 12); doc.text("Total", col4H, hY + 12, { align: "right" });
+  y = hY + 18; hRule(doc, y, M, pageW, [200, 190, 178]); y += 2;
 
   let rowIdx = 0;
   for (const cat of CATEGORY_ORDER) {
     const catItems = grouped[cat];
     if (!catItems?.length) continue;
-
-    // Category sub-header
-    doc.setFillColor(240, 235, 228);
-    doc.rect(M, y, pageW - M * 2, 13, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.5);
-    doc.setTextColor(120, 105, 88);
-    doc.text(cat, M + 8, y + 9.5);
-    y += 13;
-
+    doc.setFillColor(240, 235, 228); doc.rect(M, y, pageW - M * 2, 13, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(120, 105, 88); doc.text(cat, M + 8, y + 9.5); y += 13;
     for (const item of catItems) {
-      y = tableRow(
-        doc, y, M, pageW,
-        item.description,
-        item.qty > 1 ? String(item.qty) : "",
-        item.qty > 1 ? `$${item.unitCost.toFixed(0)} ea` : "",
-        usd(item.total),
-        rowIdx % 2 === 0,
-      );
+      y = tableRow(doc, y, M, pageW, item.description, item.qty > 1 ? String(item.qty) : "", item.qty > 1 ? `$${item.unitCost.toFixed(0)} ea` : "", usd(item.total), rowIdx % 2 === 0);
       rowIdx++;
-
-      // Page overflow guard
       if (y > pageH - 130) {
         doc.addPage("a4", "portrait");
-        doc.setFillColor(45, 40, 35);
-        doc.rect(0, 0, pageW, 28, "F");
-        doc.setFont("times", "bold"); doc.setFontSize(12); doc.setTextColor(245, 238, 225);
-        doc.text("ALVÉO", M, 19);
-        doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(180, 165, 148);
-        doc.text(`${quoteNum}  ·  ${designName}  ·  continued`, M + 44, 19);
+        doc.setFillColor(45, 40, 35); doc.rect(0, 0, pageW, 28, "F");
+        doc.setFont("times", "bold"); doc.setFontSize(12); doc.setTextColor(245, 238, 225); doc.text("ALVÉO", M, 19);
+        doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(180, 165, 148); doc.text(`${quoteNum}  ·  ${designName}  ·  continued`, M + 44, 19);
         y = 44;
       }
     }
   }
 
-  hRule(doc, y + 4, M, pageW);
-  y += 12;
-
-  // Subtotals
-  const subtotalRows: [string, number, boolean][] = [
-    ["Materials, hardware & logistics subtotal", materialsSubtotal, false],
-    ["Labour & installation (42%)", labourCost, false],
-  ];
-  for (const [label, amount, bold] of subtotalRows) {
-    doc.setFont("helvetica", bold ? "bold" : "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(80, 70, 60);
-    doc.text(label, M + 8, y + 10);
-    doc.setFont("helvetica", "bold");
-    doc.text(usd(amount), pageW - M - 8, y + 10, { align: "right" });
-    y += 16;
+  hRule(doc, y + 4, M, pageW); y += 12;
+  for (const [label, amount] of [["Materials, hardware & logistics subtotal", materialsSubtotal], ["Labour & installation (42%)", labourCost]] as [string, number][]) {
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(80, 70, 60); doc.text(label, M + 8, y + 10);
+    doc.setFont("helvetica", "bold"); doc.text(usd(amount), pageW - M - 8, y + 10, { align: "right" }); y += 16;
   }
 
   y += 4;
-  // Grand total bar
-  doc.setFillColor(45, 40, 35);
-  doc.roundedRect(M, y, pageW - M * 2, 34, 4, 4, "F");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(200, 190, 175);
-  doc.text("GRAND TOTAL (estimated)", M + 12, y + 22);
-  doc.setFont("times", "bold");
-  doc.setFontSize(18);
-  doc.setTextColor(255, 245, 230);
-  doc.text(usd(grandTotal), pageW - M - 12, y + 24, { align: "right" });
+  doc.setFillColor(45, 40, 35); doc.roundedRect(M, y, pageW - M * 2, 34, 4, 4, "F");
+  doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(200, 190, 175); doc.text("GRAND TOTAL (estimated)", M + 12, y + 22);
+  doc.setFont("times", "bold"); doc.setFontSize(18); doc.setTextColor(255, 245, 230); doc.text(usd(grandTotal), pageW - M - 12, y + 24, { align: "right" });
   y += 46;
 
-  // Finance hint
   const monthly = usd(Math.round(grandTotal / 36));
-  doc.setFillColor(250, 247, 242);
-  doc.setDrawColor(220, 210, 195);
-  doc.setLineWidth(0.4);
+  doc.setFillColor(250, 247, 242); doc.setDrawColor(220, 210, 195); doc.setLineWidth(0.4);
   doc.roundedRect(M, y, pageW - M * 2, 28, 3, 3, "FD");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8.5);
-  doc.setTextColor(60, 50, 40);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8.5); doc.setTextColor(60, 50, 40);
   doc.text(`Finance from ${monthly}/mo  ·  Based on 36-month 0% APR — subject to lender approval`, M + 10, y + 10);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(120, 110, 95);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(120, 110, 95);
   doc.text("Contact your Alvéo designer for financing options.", M + 10, y + 21);
   y += 38;
 
-  // ── Footer / Terms ────────────────────────────────────────────────────────────
-  y = Math.max(y, pageH - 100);
-  hRule(doc, y, M, pageW);
-  y += 10;
-
-  const terms = [
+  y = Math.max(y, pageH - 100); hRule(doc, y, M, pageW); y += 10;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(150, 140, 125);
+  [
     "All estimates are indicative only and exclude applicable taxes, permit fees, and site-specific variations.",
     "This quotation is valid for 30 days from the issue date. Final pricing confirmed on signed order.",
     "Measurements and product specifications subject to final site survey and sign-off.",
     "© Alvéo Design Platform — Designed with care for your space.",
-  ];
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(150, 140, 125);
-  terms.forEach((line, i) => {
-    doc.text(line, M, y + i * 11);
-  });
+  ].forEach((line, i) => doc.text(line, M, y + i * 11));
 
-  // Page numbers
   const pageCount = (doc.internal as unknown as { getNumberOfPages(): number }).getNumberOfPages();
   for (let p = 1; p <= pageCount; p++) {
     doc.setPage(p);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(160, 150, 135);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(160, 150, 135);
     doc.text(`Page ${p} of ${pageCount}`, pageW - M, pageH - 16, { align: "right" });
     doc.text("ALVÉO · DESIGN QUOTATION", M, pageH - 16);
   }
 
+  return { doc, quoteNum, grandTotal, designName };
+}
+
+// ─── Public exports ───────────────────────────────────────────────────────────
+
+export async function exportQuoteToPDF(options: QuotePDFOptions): Promise<void> {
+  const { doc, designName } = await buildQuotePDF(options);
+  const clientName = options.clientName ?? "";
   const slug = (designName + (clientName ? `-${clientName}` : ""))
     .toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60);
-  doc.save(`alveo-quote-${slug}-${today.toISOString().slice(0, 10)}.pdf`);
+  doc.save(`alveo-quote-${slug}-${new Date().toISOString().slice(0, 10)}.pdf`);
+}
+
+export async function exportQuoteToBase64(options: QuotePDFOptions): Promise<{
+  base64: string;
+  quoteNum: string;
+  grandTotal: number;
+  designName: string;
+}> {
+  const { doc, quoteNum, grandTotal, designName } = await buildQuotePDF(options);
+  const dataUri = doc.output("datauristring");
+  const base64 = dataUri.split(",")[1] ?? dataUri;
+  return { base64, quoteNum, grandTotal, designName };
 }
