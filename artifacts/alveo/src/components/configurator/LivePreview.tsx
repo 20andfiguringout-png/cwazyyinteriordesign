@@ -19,6 +19,7 @@ import {
   exportLayoutToPDF,
   exportMultipleDesignsToPDF,
 } from "@/engine/PDFExporter";
+import { exportQuoteToPDF } from "@/engine/QuotePDFExporter";
 import { renderFloorPlan } from "@/renderer/FloorPlanRenderer";
 import {
   Download,
@@ -347,6 +348,36 @@ export function LivePreview({
       trackEvent("export_pdf", { type: "single" });
     } catch {
       alert("Could not generate PDF. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportQuote = async () => {
+    if (!layout) return;
+    setIsExporting(true);
+    try {
+      const designName =
+        savedDesigns.length > 0
+          ? savedDesigns[savedDesigns.length - 1].name
+          : projectRef
+          ? `${projectRef} — Closet`
+          : "Closet Design";
+      await exportQuoteToPDF({
+        layout,
+        config,
+        designName,
+        clientName,
+        projectRef,
+        designerName: userEmail?.split("@")[0],
+        designerEmail: userEmail,
+        logoDataUrl,
+        accessories: config.accessories,
+        lighting: config.lighting,
+      });
+      trackEvent("export_quote_pdf", { designName });
+    } catch {
+      alert("Could not generate quote PDF. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -846,6 +877,22 @@ export function LivePreview({
                       </span>
                       <div className="text-xs text-charcoal-400 mt-0.5">
                         Pick which designs to include
+                      </div>
+                    </button>
+                    <div className="border-t border-cream-200" />
+                    <button
+                      onClick={() => {
+                        setShowExportMenu(false);
+                        handleExportQuote();
+                      }}
+                      disabled={!layout}
+                      className="w-full text-left px-4 py-3 text-sm hover:bg-amber-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <span className="font-medium text-amber-800">
+                        Quote / Invoice PDF
+                      </span>
+                      <div className="text-xs text-charcoal-400 mt-0.5">
+                        Professional quote with cost breakdown
                       </div>
                     </button>
                   </motion.div>
