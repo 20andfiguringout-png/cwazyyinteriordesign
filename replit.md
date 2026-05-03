@@ -40,7 +40,6 @@ Backend with routes for:
 - `/api/auth/register` — email+password signup (bcryptjs)
 - `/api/auth/login` — email+password login → JWT
 - `/api/auth/me` — get current user from JWT Bearer
-- `/api/auth/token` — legacy dev token endpoint
 - `/api/designs` — save/load closet designs per user
 - `/api/projects` — CRUD for designer projects (groups designs)
 - `/api/approvals/send` — create client approval request with design snapshot
@@ -81,14 +80,33 @@ Tables in PostgreSQL (managed via Drizzle ORM in `lib/db/src/schema/`):
 - `users` — auth users (email, bcrypt password_hash, profile info)
 - `sessions` — OIDC session store
 
+## Security Hardening (completed)
+
+- `helmet` security headers on all responses (HSTS, CSP, X-Frame-Options, etc.)
+- CORS restricted to known Replit domain + localhost
+- Brute-force rate limiting on auth routes (10 req / 15 min per IP)
+- JWT signed with strong random `JWT_SECRET` (set via Replit env vars)
+- Constant-time bcrypt comparison on login to prevent timing attacks
+- All user-supplied values HTML-escaped in outgoing email templates
+- SQL injection prevented — all queries fully parameterised; sort-column allowlist in comments route
+- Audit trail written to `alveo_audit_log` for every auth, design, client, project and approval mutation
+- Rate limiting uses `req.ip` (trust-proxy normalised) not raw `x-forwarded-for`
+- Request body capped at 15 MB
+
 ## Required Environment Variables
 
 ### `artifacts/api-server`
 | Variable | Required | Description |
 |---|---|---|
 | `DATABASE_URL` | Yes | PostgreSQL connection string (provided by Replit DB integration) |
-| `JWT_SECRET` | **Yes in production** | Secret for signing JWT auth tokens. Server refuses to start in production if absent. In development a fallback default is used. |
-| `EVENTS_ADMIN_TOKEN` | No | Token for admin-only routes (`GET /api/events`, `PATCH /design-comments` mention-ack). |
+| `JWT_SECRET` | **Yes** | Secret for signing JWT tokens — generated and stored as a Replit env var. Server refuses to start in production without it. |
+| `EVENTS_ADMIN_TOKEN` | No | Token for admin-only routes (`GET /api/events`, `PATCH /design-comments` mention-ack). Set this before going live if you want to use analytics or comment admin features. |
+| `SMTP_HOST` | No | SMTP server hostname for quote email sending. Quote emails silently no-op without this. |
+| `SMTP_USER` | No | SMTP auth username. |
+| `SMTP_PASS` | No | SMTP auth password. |
+| `SMTP_PORT` | No | SMTP port (default: 587). |
+| `SMTP_SECURE` | No | `"true"` to use TLS (default: false / STARTTLS). |
+| `SMTP_FROM` | No | From address for outgoing emails (defaults to `SMTP_USER`). |
 
 ### `artifacts/alveo`
 | Variable | Required | Description |

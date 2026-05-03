@@ -9,6 +9,18 @@ const router = Router();
 const pool = new Pool({ connectionString: process.env["DATABASE_URL"] });
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
+pool.query(`
+  CREATE TABLE IF NOT EXISTS alveo_designs (
+    id TEXT NOT NULL,
+    user_email TEXT NOT NULL,
+    name TEXT NOT NULL DEFAULT 'Design',
+    config JSONB,
+    saved_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    project_id TEXT,
+    PRIMARY KEY (user_email, id)
+  )
+`).catch(() => {});
+
 // Use req.ip (set by Express with trust proxy) rather than raw x-forwarded-for
 function clientIp(req: Request): string {
   return req.ip ?? req.socket.remoteAddress ?? "unknown";

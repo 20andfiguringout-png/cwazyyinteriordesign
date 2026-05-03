@@ -6,6 +6,18 @@ import { Pool } from "pg";
 const router = Router();
 const pool   = new Pool({ connectionString: process.env["DATABASE_URL"] });
 
+pool.query(`
+  CREATE TABLE IF NOT EXISTS alveo_events (
+    id BIGSERIAL PRIMARY KEY,
+    event_name TEXT NOT NULL,
+    properties JSONB,
+    session_id TEXT,
+    user_email TEXT,
+    ip TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`).catch(() => {});
+
 const schema = z.object({
   name: z.string().min(1).max(100),
   props: z
