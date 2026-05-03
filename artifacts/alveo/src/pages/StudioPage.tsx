@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect, useCallback, type ReactElement } from "react";
 import { useLocation, Link } from "wouter";
-import { ArrowLeft, ArrowRight, Check, Plus, GripVertical, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Plus, GripVertical, Trash2, Bookmark, BookmarkCheck, ExternalLink, AlertCircle } from "lucide-react";
 import { BUILTIN_CATALOGUE, getCat, type CatalogueEntry } from "@/types/catalogue";
+import { getStoredToken } from "@/lib/AuthContext";
+
+const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -498,6 +501,156 @@ function StepBar({ step }: { step: number }) {
   );
 }
 
+// ─── Save panel ──────────────────────────────────────────────────────────────
+
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+
+interface SavePanelProps {
+  modules: StudioModule[];
+  wallW: number; wallH: number; wallD: number;
+  kind: ClosetKind;
+}
+
+function SavePanel({ modules, wallW, wallH, wallD, kind }: SavePanelProps) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [status, setStatus] = useState<SaveStatus>("idle");
+  const [savedId, setSavedId] = useState("");
+  const [errMsg, setErrMsg] = useState("");
+  const isLoggedIn = !!getStoredToken();
+
+  const save = async () => {
+    const trimmed = name.trim() || "My Studio Design";
+    setStatus("saving");
+    setErrMsg("");
+
+    const id = `studio_${Date.now().toString(36)}`;
+    const design = {
+      id,
+      name: trimmed,
+      config: {
+        source: "studio",
+        closetKind: kind,
+        wallDimensions: { width: wallW, height: wallH, depth: wallD },
+        builderModules: modules,
+      },
+      savedAt: new Date().toISOString(),
+    };
+
+    const token = getStoredToken();
+    if (token) {
+      try {
+        const res = await fetch(`${BASE}/api/designs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ design }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        setSavedId(id);
+        setStatus("saved");
+      } catch (e) {
+        setErrMsg("Could not reach the server — saved locally instead.");
+        _localSave(design);
+        setSavedId(id);
+        setStatus("saved");
+      }
+    } else {
+      _localSave(design);
+      setSavedId(id);
+      setStatus("saved");
+    }
+  };
+
+  const reset = () => { setOpen(false); setStatus("idle"); setName(""); setSavedId(""); setErrMsg(""); };
+
+  return (
+    <div className="flex-shrink-0">
+      {!open ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-taupe-600 bg-taupe-50 hover:bg-taupe-100 border border-taupe-200 transition-all"
+        >
+          <Bookmark size={14}/> Save Design
+        </button>
+      ) : (
+        <div className="w-full bg-white border border-stone-200 rounded-2xl shadow-lg overflow-hidden">
+          {status === "saved" ? (
+            <div className="px-5 py-4 flex items-center gap-3">
+              <span className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                <BookmarkCheck size={16} className="text-green-600"/>
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-charcoal-600">Design saved!</p>
+                {errMsg && <p className="text-xs text-amber-600 mt-0.5">{errMsg}</p>}
+                {!isLoggedIn && !errMsg && (
+                  <p className="text-xs text-stone-400 mt-0.5">
+                    Saved locally.{" "}
+                    <Link href="/login" className="text-taupe-600 hover:underline">Log in</Link>
+                    {" "}to sync to your account.
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {isLoggedIn && (
+                  <Link href="/dashboard"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-taupe-600 bg-taupe-50 hover:bg-taupe-100 border border-taupe-200 transition-colors">
+                    Dashboard <ExternalLink size={11}/>
+                  </Link>
+                )}
+                <button onClick={reset}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-stone-500 bg-stone-100 hover:bg-stone-200 transition-colors">
+                  Done
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="px-5 py-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Bookmark size={14} className="text-taupe-500 flex-shrink-0"/>
+                <p className="text-sm font-semibold text-charcoal-600">Save to My Designs</p>
+                {!isLoggedIn && (
+                  <span className="ml-auto flex items-center gap-1 text-[10px] text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                    <AlertCircle size={9}/> Not logged in — saves locally
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  autoFocus
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") reset(); }}
+                  placeholder="e.g. Master Bedroom Walk-In"
+                  className="flex-1 text-sm border border-stone-200 rounded-xl px-3 py-2 text-charcoal-700 placeholder-stone-300 focus:outline-none focus:ring-2 focus:ring-taupe-300 bg-stone-50"
+                />
+                <button onClick={save} disabled={status === "saving"}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-taupe-500 hover:bg-taupe-600 disabled:opacity-50 transition-colors flex-shrink-0">
+                  {status === "saving" ? (
+                    <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"/>
+                  ) : <Bookmark size={13}/>}
+                  {status === "saving" ? "Saving…" : "Save"}
+                </button>
+                <button onClick={reset}
+                  className="px-3 py-2 rounded-xl text-sm text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors">
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function _localSave(design: object) {
+  try {
+    const key = "alveo_saved_designs";
+    const prev = JSON.parse(localStorage.getItem(key) || "[]") as object[];
+    localStorage.setItem(key, JSON.stringify([...prev, design]));
+  } catch { /* ignore */ }
+}
+
 // ─── StudioPage ───────────────────────────────────────────────────────────────
 
 export default function StudioPage() {
@@ -553,8 +706,9 @@ export default function StudioPage() {
       </div>
 
       {/* Bottom navigation */}
-      <div className="flex-shrink-0 bg-white border-t border-stone-200 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex-shrink-0 bg-white border-t border-stone-200 px-4 sm:px-6 py-4 flex flex-wrap items-center gap-3">
+        {/* Left: Back / Home */}
+        <div className="flex items-center">
           {step > 1 ? (
             <button onClick={() => setStep((s) => s - 1)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-stone-500 bg-stone-100 hover:bg-stone-200 transition-colors">
@@ -568,16 +722,24 @@ export default function StudioPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-stone-400">
-          {step === 2 && <span className="font-mono">{wallW}″ × {wallH}″ × {wallD}″ deep</span>}
-          {step === 3 && modules.length > 0 && (
-            <span className={totalUsed > wallW ? "text-red-500 font-medium" : ""}>
-              {modules.length} modules · {totalUsed}″ / {wallW}″
+        {/* Centre: Save panel (step 3 only) / dim summary */}
+        <div className="flex-1 flex items-center justify-center min-w-0">
+          {step === 3 ? (
+            <SavePanel modules={modules} wallW={wallW} wallH={wallH} wallD={wallD} kind={kind}/>
+          ) : (
+            <span className="text-xs text-stone-400 font-mono">
+              {step === 2 ? `${wallW}″ × ${wallH}″ × ${wallD}″ deep` : ""}
             </span>
           )}
         </div>
 
+        {/* Right: Next / Open in Builder */}
         <div className="flex items-center gap-2">
+          {step === 3 && modules.length > 0 && (
+            <span className={`text-xs font-medium whitespace-nowrap ${totalUsed > wallW ? "text-red-500" : "text-stone-400"}`}>
+              {totalUsed}″ / {wallW}″
+            </span>
+          )}
           {step < 3 ? (
             <button onClick={() => setStep((s) => s + 1)} disabled={!canAdvance}
               className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold text-white bg-charcoal-600 hover:bg-charcoal-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
